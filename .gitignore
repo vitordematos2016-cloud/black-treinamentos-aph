@@ -1,0 +1,17 @@
+# Dependências e build
+node_modules/
+dist/
+*.log
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Arquivos temporários e prints de referência locais
+.tmp/
+referencias/
+
+# Sistema
+.DS_Store
+Thumbs.db
