@@ -140,16 +140,6 @@ export default function JourneyAndCertification({
     return () => ctx.revert();
   }, []);
 
-  const handleStepClick = (stepIdx) => {
-    if (stepIdx === 0) {
-      onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)');
-    } else if (stepIdx === 1) {
-      document.getElementById('equipe')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (stepIdx === 2) {
-      document.getElementById('certificacao')?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const openCertificatePreview = () => {
     setCertFocusSide(null);
     setShowCertModal(true);
@@ -275,35 +265,58 @@ export default function JourneyAndCertification({
             </div>
           </div>
 
-          {/* Grade dos 3 Cards Interativos (01 -> Inscrição | 02 -> Equipe | 03 -> Certificação) */}
+          {/* Grade dos 3 Cards (01 interativo -> Inscrição | 02 e 03 informativos estáticos) */}
           <div className="w-full lg:w-[76%] xl:w-[75%] grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {COMO_FUNCIONA_PASSOS.map((item, idx) => {
               const StepIcon = STEP_ICONS[item.icone] || CheckCircle2;
               const isLastCard = idx === COMO_FUNCIONA_PASSOS.length - 1;
-              const stepHints = ['Inscrever-se', 'Ver Equipe', 'Ver Certificado'];
+              const isEnrollStep = idx === 0;
+              const CardTag = isEnrollStep ? 'button' : 'article';
+              const baseCardClasses =
+                'etapa-card-reveal text-left relative bg-[#0B0B0F]/88 backdrop-blur-md border border-[#ED101C]/60 rounded-2xl p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between shadow-[0_14px_38px_rgba(0,0,0,0.8),inset_0_-1px_12px_rgba(237,16,28,0.18)]';
+              const interactiveClasses = isEnrollStep
+                ? 'group hover:border-[#ED101C] hover:shadow-[0_18px_46px_rgba(237,16,28,0.26),inset_0_0_20px_rgba(237,16,28,0.15)] hover:-translate-y-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]'
+                : '';
+
               return (
-                <button
-                  type="button"
+                <CardTag
                   key={item.passo}
-                  onClick={() => handleStepClick(idx)}
-                  className="etapa-card-reveal text-left relative bg-[#0B0B0F]/88 backdrop-blur-md border border-[#ED101C]/60 hover:border-[#ED101C] rounded-2xl p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between group shadow-[0_14px_38px_rgba(0,0,0,0.8),inset_0_-1px_12px_rgba(237,16,28,0.18)] hover:shadow-[0_18px_46px_rgba(237,16,28,0.26),inset_0_0_20px_rgba(237,16,28,0.15)] hover:-translate-y-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
+                  {...(isEnrollStep
+                    ? {
+                        type: 'button',
+                        onClick: () =>
+                          onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)'),
+                      }
+                    : {})}
+                  className={`${baseCardClasses} ${interactiveClasses}`}
                 >
                   {/* Brilho vermelho na borda inferior do card */}
                   <div
-                    className="pointer-events-none absolute inset-x-6 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#ED101C] to-transparent opacity-80 group-hover:opacity-100 transition-opacity"
+                    className={`pointer-events-none absolute inset-x-6 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#ED101C] to-transparent transition-opacity ${
+                      isEnrollStep ? 'opacity-80 group-hover:opacity-100' : 'opacity-75'
+                    }`}
                     aria-hidden="true"
                   />
 
                   <div>
                     <div className="flex items-center justify-between mb-5">
-                      <span className="font-display font-extrabold text-2xl sm:text-3xl text-[#ED101C] group-hover:drop-shadow-[0_0_10px_rgba(237,16,28,0.6)] transition-all">
+                      <span
+                        className={`font-display font-extrabold text-2xl sm:text-3xl text-[#ED101C] transition-all ${
+                          isEnrollStep ? 'group-hover:drop-shadow-[0_0_10px_rgba(237,16,28,0.6)]' : ''
+                        }`}
+                      >
                         {item.passo}
                       </span>
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isLastCard
-                          ? 'bg-[#ED101C] text-white shadow-[0_0_18px_rgba(237,16,28,0.75)] group-hover:scale-105'
-                          : 'bg-[#26070B]/90 border border-[#ED101C]/50 text-white group-hover:bg-[#ED101C] group-hover:shadow-[0_0_18px_rgba(237,16,28,0.6)]'
-                          }`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          isLastCard
+                            ? 'bg-[#ED101C] text-white shadow-[0_0_18px_rgba(237,16,28,0.75)]'
+                            : `bg-[#26070B]/90 border border-[#ED101C]/50 text-white ${
+                                isEnrollStep
+                                  ? 'group-hover:bg-[#ED101C] group-hover:shadow-[0_0_18px_rgba(237,16,28,0.6)]'
+                                  : ''
+                              }`
+                        }`}
                       >
                         <StepIcon className="w-5 h-5" />
                       </div>
@@ -317,16 +330,20 @@ export default function JourneyAndCertification({
                     </p>
                   </div>
 
-                  <div className="mt-6 pt-3.5 border-t border-white/10 flex items-center justify-between text-[11px] text-white/75 group-hover:text-white font-mono tracking-wider transition-colors">
+                  <div
+                    className={`mt-6 pt-3.5 border-t border-white/10 flex items-center justify-between text-[11px] font-mono tracking-wider transition-colors ${
+                      isEnrollStep ? 'text-white/75 group-hover:text-white' : 'text-white/65'
+                    }`}
+                  >
                     <span>ETAPA {idx + 1} DE {COMO_FUNCIONA_PASSOS.length}</span>
-                    <span className="inline-flex items-center gap-1 text-[#ED101C] font-bold">
-                      <span className="opacity-0 group-hover:opacity-100 text-[10px] transition-opacity">
-                        {stepHints[idx]}
+                    {isEnrollStep && (
+                      <span className="inline-flex items-center gap-1.5 text-[#ED101C] font-bold">
+                        <span className="text-[10px] uppercase tracking-wider">Inscrever-se</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
+                    )}
                   </div>
-                </button>
+                </CardTag>
               );
             })}
           </div>
