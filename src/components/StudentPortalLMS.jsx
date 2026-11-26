@@ -77,7 +77,7 @@ import StudentLoginScreen from './StudentLoginScreen';
 import GlassCourseCalendar, { getFirstClassDayInMonth } from './GlassCourseCalendar';
 import PaymentReceiptModal from './PaymentReceiptModal';
 
-export default function StudentPortalLMS() {
+export default function StudentPortalLMS({ onBackToLanding }) {
   const catalog = useMemo(() => getCourseCatalog200h(), []);
   const { curso, atividadesIniciais } = catalog;
   const [modulos, setModulos] = useState(() => loadCourseModules200h());
@@ -298,6 +298,7 @@ export default function StudentPortalLMS() {
   if (!session) {
     return (
       <StudentLoginScreen
+        onBackToLanding={onBackToLanding}
         onLoginSuccess={(newSession) => {
           setSession(newSession);
           showToast(`Bem-vindo(a), ${newSession.nome}!`, 'success');
@@ -950,7 +951,7 @@ export default function StudentPortalLMS() {
   const activeAula = activeModule ? activeModule.aulas[activeAulaIndex] || activeModule.aulas[0] : null;
 
   return (
-    <div className="min-h-screen bg-[#07080C] text-white flex flex-col lg:flex-row font-sans selection:bg-[#ED101C] selection:text-white pb-36 lg:pb-16">
+    <div className="min-h-screen bg-[#07080C] text-white flex flex-col lg:flex-row font-sans selection:bg-[#ED101C] selection:text-white pb-24 lg:pb-16">
       {/* TOAST ELEGANTE GLOBAL */}
       {toast && (
         <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 z-[90] sm:max-w-sm bg-[#12131A]/95 backdrop-blur-xl border border-[#ED101C]/70 rounded-2xl px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.85)] flex items-start gap-3">
@@ -1103,6 +1104,17 @@ export default function StudentPortalLMS() {
             <LogOut className="w-3.5 h-3.5 text-[#ED101C]" />
             <span>Sair da conta</span>
           </button>
+
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white/75 hover:text-white text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#ED101C]" />
+              <span>Voltar ao Site</span>
+            </button>
+          )}
         </div>
       </aside>
 
@@ -3456,7 +3468,7 @@ export default function StudentPortalLMS() {
 
       {/* BARRA INFERIOR NATIVA ESTILO APP NO CELULAR (< LG) */}
       <nav
-        className="lg:hidden fixed bottom-[54px] left-3 right-3 z-40 bg-[#0D0E14]/95 backdrop-blur-xl border border-[#ED101C]/45 rounded-2xl px-2 py-1.5 grid grid-cols-5 gap-1 shadow-[0_12px_35px_rgba(0,0,0,0.9)]"
+        className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-[#0D0E14]/95 backdrop-blur-xl border border-[#ED101C]/45 rounded-2xl px-2 py-1.5 grid grid-cols-5 gap-1 shadow-[0_12px_35px_rgba(0,0,0,0.9)]"
         aria-label="Navegação mobile"
       >
         {[

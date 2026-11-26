@@ -12,6 +12,7 @@ import {
   MapPin,
   Phone,
   ShieldCheck,
+  GraduationCap,
 } from 'lucide-react';
 import { BRAND_CONFIG, DIFERENCIAIS_LIST, getWhatsAppUrl } from '../data/blackData';
 import Hero3DLogoStage from './Hero3DLogoStage';
@@ -33,7 +34,7 @@ const NAV_LINKS = [
   { id: 'contato', label: 'Contato', href: '#contato' },
 ];
 
-export default function NavbarAndHero({ onOpenEnrollModal }) {
+export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
@@ -105,18 +106,18 @@ export default function NavbarAndHero({ onOpenEnrollModal }) {
             <a
               href="#inicio"
               onClick={() => setActiveSection('inicio')}
-              className="flex items-center justify-center pl-1 sm:pl-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] rounded-lg group"
+              className="flex items-center justify-center pl-1 sm:pl-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] rounded-lg group shrink-0"
               aria-label="BLACK Treinamentos - Resgate & APH - Ir para o início"
             >
               <img
                 src="/assets/logo-header-sharp.png"
                 alt="Logomarca oficial BLACK Treinamentos - Resgate & APH"
-                className="h-12 sm:h-14 lg:h-[58px] w-auto object-contain select-none drop-shadow-[0_2px_12px_rgba(237,16,28,0.35)] group-hover:scale-[1.03] transition-transform"
+                className="h-10 sm:h-14 lg:h-[56px] w-auto object-contain select-none drop-shadow-[0_2px_12px_rgba(237,16,28,0.35)] group-hover:scale-[1.03] transition-transform"
               />
             </a>
 
             {/* Navegação Desktop com Sinalizador Inteligente de Aba Ativa ao Rolar/Subir */}
-            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2" aria-label="Navegação principal">
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5" aria-label="Navegação principal">
               {NAV_LINKS.map((item) => {
                 const isActive = activeSection === item.id;
                 return (
@@ -125,7 +126,7 @@ export default function NavbarAndHero({ onOpenEnrollModal }) {
                     href={item.href}
                     onClick={() => setActiveSection(item.id)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`relative px-3.5 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] ${
+                    className={`relative px-2.5 xl:px-3.5 py-2 rounded-xl text-xs xl:text-sm font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] ${
                       isActive
                         ? 'bg-gradient-to-r from-[#ED101C]/25 via-[#ED101C]/15 to-white/10 text-white border border-[#ED101C]/80 shadow-[0_0_20px_rgba(237,16,28,0.45)]'
                         : 'text-white/75 hover:text-white hover:bg-white/[0.05] border border-transparent'
@@ -149,28 +150,39 @@ export default function NavbarAndHero({ onOpenEnrollModal }) {
               })}
             </nav>
 
-            {/* CTA Desktop "Inscreva-se agora" */}
-            <div className="hidden sm:flex items-center gap-3 pr-1">
+            {/* Ações Direitas: Área do Aluno + Inscreva-se agora + Hamburger Mobile */}
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+              {onOpenStudentPortal && (
+                <button
+                  type="button"
+                  onClick={onOpenStudentPortal}
+                  className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-[#ED101C]/65 text-white text-[11px] sm:text-xs xl:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ED101C] shrink-0" />
+                  <span>Área do Aluno</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)')}
-                className="btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-red-glow-sm flex items-center gap-2 border border-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="hidden sm:flex btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs xl:text-sm px-4 xl:px-5 py-2.5 rounded-xl shadow-red-glow-sm items-center gap-2 border border-white/20 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <span>Inscreva-se agora</span>
               </button>
-            </div>
 
-            {/* Botão Hamburger Mobile */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-navigation-menu"
-              aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
-              className="lg:hidden p-2.5 rounded-xl bg-[#17171D] text-white hover:bg-[#24242C] border border-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              {/* Botão Hamburger Mobile */}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation-menu"
+                aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+                className="lg:hidden p-2 sm:p-2.5 rounded-xl bg-[#17171D] text-white hover:bg-[#24242C] border border-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -219,6 +231,19 @@ export default function NavbarAndHero({ onOpenEnrollModal }) {
                 <span>Inscreva-se agora</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+              {onOpenStudentPortal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenStudentPortal();
+                  }}
+                  className="w-full bg-white/[0.06] hover:bg-white/[0.12] text-white font-bold py-3 px-4 rounded-xl border border-white/15 flex items-center justify-center gap-2 text-sm"
+                >
+                  <GraduationCap className="w-4 h-4 text-[#ED101C]" />
+                  <span>Área do Aluno (Portal LMS)</span>
+                </button>
+              )}
               <a
                 href={getWhatsAppUrl()}
                 target="_blank"

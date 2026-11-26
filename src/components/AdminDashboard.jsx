@@ -1025,7 +1025,7 @@ export default function AdminDashboard() {
   const totalPendingAlerts = pendingCertRequests.length + pendingJustifications.length;
 
   return (
-    <div className="min-h-screen bg-[#07080C] bg-[radial-gradient(ellipse_65%_45%_at_55%_0%,rgba(237,16,28,0.08)_0%,rgba(7,8,12,0)_68%)] text-white flex flex-col lg:flex-row font-sans selection:bg-[#ED101C] selection:text-white pb-36 lg:pb-16">
+    <div className="min-h-screen bg-[#07080C] bg-[radial-gradient(ellipse_65%_45%_at_55%_0%,rgba(237,16,28,0.08)_0%,rgba(7,8,12,0)_68%)] text-white flex flex-col lg:flex-row font-sans selection:bg-[#ED101C] selection:text-white pb-24 lg:pb-16">
       {/* FOGOS / CONFETES CELEBRATÓRIOS AO MATRICULAR NOVO ALUNO */}
       {showCelebration && (
         <div
@@ -4245,7 +4245,7 @@ export default function AdminDashboard() {
       })()}
       {/* BARRA INFERIOR NATIVA ESTILO APP NO CELULAR / TABLET (< LG) */}
       <nav
-        className="lg:hidden fixed bottom-[54px] left-3 right-3 z-40 bg-[#0D0E14]/95 backdrop-blur-xl border border-[#ED101C]/45 rounded-2xl px-1.5 py-1.5 grid grid-cols-5 gap-1 shadow-[0_12px_35px_rgba(0,0,0,0.9)]"
+        className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-[#0D0E14]/95 backdrop-blur-xl border border-[#ED101C]/45 rounded-2xl px-1.5 py-1.5 grid grid-cols-5 gap-1 shadow-[0_12px_35px_rgba(0,0,0,0.9)]"
         aria-label="Navegação rápida mobile do Administrador"
       >
         {[

@@ -4,6 +4,7 @@ import {
   Mail,
   Eye,
   EyeOff,
+  ArrowLeft,
   ArrowRight,
   ShieldCheck,
   Phone,
@@ -17,7 +18,7 @@ import {
   isSupabaseConfigured,
 } from '../services/lmsContentService';
 
-export default function StudentLoginScreen({ onLoginSuccess }) {
+export default function StudentLoginScreen({ onLoginSuccess, onBackToLanding }) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +76,18 @@ export default function StudentLoginScreen({ onLoginSuccess }) {
 
       {/* Card Principal de Acesso */}
       <div className="relative z-10 w-full max-w-[440px]">
+        {onBackToLanding && (
+          <div className="mb-3 flex justify-center sm:justify-start">
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-xs font-bold text-white/85 hover:text-white inline-flex items-center gap-2 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#ED101C]" />
+              <span>Voltar ao Site Principal</span>
+            </button>
+          </div>
+        )}
         <div className="cta-emergency-border rounded-3xl p-[1.5px] shadow-[0_24px_75px_rgba(0,0,0,0.9),0_0_40px_rgba(237,16,28,0.2)]">
           <div className="cta-emergency-border-ring rounded-3xl" aria-hidden="true" />
 

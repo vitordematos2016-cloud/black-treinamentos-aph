@@ -3,13 +3,7 @@ import {
   Phone,
   X,
   CheckCircle2,
-  Eye,
-  EyeOff,
   Shield,
-  Globe,
-  GraduationCap,
-  LayoutDashboard,
-  Lock,
 } from 'lucide-react';
 import NavbarAndHero from './components/NavbarAndHero';
 import CoursesSection from './components/CoursesSection';
@@ -37,7 +31,6 @@ export default function App() {
 
   const [currentProject, setCurrentProject] = useState(getInitialView);
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
-  const [showTestimonialsPreview, setShowTestimonialsPreview] = useState(false);
 
   const [formNome, setFormNome] = useState('');
   const [formTelefone, setFormTelefone] = useState('');
@@ -53,7 +46,11 @@ export default function App() {
   const switchProject = (proj) => {
     setCurrentProject(proj);
     const url = new URL(window.location.href);
-    url.searchParams.set('view', proj);
+    if (proj === 'landing') {
+      url.searchParams.delete('view');
+    } else {
+      url.searchParams.set('view', proj);
+    }
     window.history.pushState({}, '', url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -73,57 +70,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col selection:bg-[#ED101C] selection:text-white">
-      {/* BARRA FLUTUANTE DE NAVEGAÇÃO ENTRE OS 3 PROJETOS (Compacta no Mobile sem corte horizontal) */}
-      <div className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#111218]/95 backdrop-blur-xl border border-white/15 rounded-full p-1 sm:p-1.5 shadow-[0_15px_40px_rgba(0,0,0,0.85)] flex items-center gap-0.5 sm:gap-1.5 max-w-[96vw] overflow-x-auto no-scrollbar">
-        <button
-          type="button"
-          onClick={() => switchProject('landing')}
-          className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all ${
-            currentProject === 'landing'
-              ? 'bg-[#ED101C] text-white shadow-red-glow-sm'
-              : 'text-white/75 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5 shrink-0" />
-          <span>1. Landing</span>
-          <span className="hidden sm:inline">Page</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => switchProject('aluno')}
-          className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all ${
-            currentProject === 'aluno'
-              ? 'bg-[#ED101C] text-white shadow-red-glow-sm'
-              : 'text-white/75 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <GraduationCap className="w-3.5 h-3.5 shrink-0" />
-          <span>2. Aluno</span>
-          <span className="hidden sm:inline">(LMS)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => switchProject('admin')}
-          className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 whitespace-nowrap transition-all ${
-            currentProject === 'admin'
-              ? 'bg-[#ED101C] text-white shadow-red-glow-sm'
-              : 'text-white/75 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-          <span>3. Admin</span>
-        </button>
-      </div>
-
-      {/* RENDERIZAÇÃO SOB DEMANDA (CODE-SPLITTING) DO PROJETO ATIVO */}
+      {/* RENDERIZAÇÃO SOB DEMANDA (CODE-SPLITTING) — SOMENTE LANDING + PORTAL DO ALUNO VISÍVEIS AO PÚBLICO */}
       <Suspense
         fallback={
           <div className="min-h-screen bg-[#050505] flex items-center justify-center">
             <div className="flex items-center gap-3 text-sm font-mono text-white/80">
               <span className="w-3 h-3 rounded-full bg-[#ED101C] animate-ping" />
-              <span>Carregando módulo BLACK Treinamentos...</span>
+              <span>Carregando BLACK Treinamentos...</span>
             </div>
           </div>
         }
@@ -131,52 +84,38 @@ export default function App() {
         {currentProject === 'admin' ? (
           <AdminDashboard onNavigateProject={switchProject} />
         ) : currentProject === 'aluno' ? (
-          <StudentPortalLMS onNavigateProject={switchProject} />
+          <StudentPortalLMS
+            onNavigateProject={switchProject}
+            onBackToLanding={() => switchProject('landing')}
+          />
         ) : (
           <>
-            <NavbarAndHero onOpenEnrollModal={handleOpenEnrollModal} />
+            <NavbarAndHero
+              onOpenEnrollModal={handleOpenEnrollModal}
+              onOpenStudentPortal={() => switchProject('aluno')}
+            />
 
             <main>
               <CoursesSection onOpenEnrollModal={handleOpenEnrollModal} />
               <InstructorsShowcase />
               <JourneyAndCertification
                 onOpenEnrollModal={handleOpenEnrollModal}
-                showTestimonialsPreview={showTestimonialsPreview}
+                onOpenStudentPortal={() => switchProject('aluno')}
+                showTestimonialsPreview={false}
               />
             </main>
 
-            {/* Botão Flutuante de WhatsApp Oficial (Posicionado acima da barra de projetos no Mobile para nunca sobrepor!) */}
+            {/* Botão Flutuante de WhatsApp Oficial */}
             <a
               href={getWhatsAppUrl()}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Falar pelo WhatsApp Oficial da BLACK Treinamentos"
-              className="fixed bottom-[66px] sm:bottom-5 right-4 sm:right-5 z-40 btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs sm:text-sm p-3.5 sm:px-4 sm:py-3 rounded-full shadow-red-glow flex items-center gap-2 border border-white/20"
+              className="fixed bottom-4 sm:bottom-5 right-4 sm:right-5 z-40 btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs sm:text-sm p-3.5 sm:px-4 sm:py-3 rounded-full shadow-red-glow flex items-center gap-2 border border-white/20"
             >
               <Phone className="w-4 h-4" />
               <span className="hidden sm:inline">WhatsApp {BRAND_CONFIG.whatsappDisplay}</span>
             </a>
-
-            {/* Controle Discreto de Revisão */}
-            <div className="fixed bottom-5 left-5 z-40 hidden md:block">
-              <button
-                type="button"
-                onClick={() => setShowTestimonialsPreview(!showTestimonialsPreview)}
-                className="px-3.5 py-2 rounded-full bg-[#121216]/90 hover:bg-[#1C1C22] backdrop-blur-md border border-white/15 text-[11px] font-mono text-white/80 hover:text-white flex items-center gap-2 shadow-xl transition-colors"
-              >
-                {showTestimonialsPreview ? (
-                  <>
-                    <EyeOff className="w-3.5 h-3.5 text-[#ED101C]" />
-                    <span>Ocultar Depoimentos</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-3.5 h-3.5 text-[#ED101C]" />
-                    <span>Testar Seção 08</span>
-                  </>
-                )}
-              </button>
-            </div>
           </>
         )}
       </Suspense>

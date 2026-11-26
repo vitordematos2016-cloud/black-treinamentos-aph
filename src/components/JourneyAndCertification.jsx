@@ -51,6 +51,7 @@ const STEP_ICONS = {
 
 export default function JourneyAndCertification({
   onOpenEnrollModal,
+  onOpenStudentPortal,
   showTestimonialsPreview,
 }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -962,6 +963,22 @@ export default function JourneyAndCertification({
                       </li>
                     );
                   })}
+                  {onOpenStudentPortal && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={onOpenStudentPortal}
+                        className="group flex items-center gap-3 hover:text-white transition-colors text-left"
+                      >
+                        <span className="w-7 h-7 rounded-lg bg-[#190508] border border-[#ED101C]/45 flex items-center justify-center text-[#ED101C] shadow-[0_0_12px_rgba(237,16,28,0.16)] group-hover:bg-[#ED101C] group-hover:text-white group-hover:shadow-[0_0_16px_rgba(237,16,28,0.6)] transition-all shrink-0">
+                          <GraduationCap className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="group-hover:translate-x-0.5 transition-transform font-semibold text-white">
+                          Área do Aluno (Portal LMS)
+                        </span>
+                      </button>
+                    </li>
+                  )}
                 </ul>
               </div>
 
