@@ -16,6 +16,11 @@ import {
 import { BRAND_CONFIG, DIFERENCIAIS_LIST, getWhatsAppUrl } from '../data/blackData';
 import Hero3DLogoStage from './Hero3DLogoStage';
 import TurmaCountdownWidget from './TurmaCountdownWidget';
+import {
+  navigateToSection,
+  pushOverlayHistory,
+  dismissOverlayHistory,
+} from '../utils/navigationHistory';
 
 const ICON_MAP = {
   UserCheck,
@@ -40,6 +45,24 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('inicio');
   const heroContentRef = useRef(null);
+
+  const openMobileMenu = () => {
+    setMobileMenuOpen(true);
+    pushOverlayHistory('mobile-menu', () => setMobileMenuOpen(false));
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    dismissOverlayHistory('mobile-menu');
+  };
+
+  const toggleMobileMenu = () => {
+    if (mobileMenuOpen) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  };
 
   // Entrada cinematográfica staggered (GSAP) da coluna de texto do Hero em sintonia com a Logo 3D
   useEffect(() => {
@@ -110,7 +133,14 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
             {/* Logo Oficial BLACK Treinamentos — Maior, mais centralizada e com nitidez reforçada */}
             <a
               href="#inicio"
-              onClick={() => setActiveSection('inicio')}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveSection('inicio');
+                navigateToSection('#inicio', {
+                  closeOverlayIds: 'mobile-menu',
+                  onBeforeScroll: () => setMobileMenuOpen(false),
+                });
+              }}
               className="flex items-center justify-center pl-0.5 sm:pl-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] rounded-lg group shrink-0"
               aria-label="BLACK Treinamentos - Resgate & APH - Ir para o início"
             >
@@ -129,7 +159,11 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
                   <a
                     key={item.id}
                     href={item.href}
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveSection(item.id);
+                      navigateToSection(item.href);
+                    }}
                     aria-current={isActive ? 'page' : undefined}
                     className={`relative px-2 xl:px-3.5 py-2 rounded-xl text-[11.5px] xl:text-sm font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] ${
                       isActive
@@ -160,7 +194,7 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
               {onOpenStudentPortal && (
                 <button
                   type="button"
-                  onClick={onOpenStudentPortal}
+                  onClick={() => onOpenStudentPortal()}
                   className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-[#ED101C]/65 text-white text-[11px] sm:text-xs xl:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
                 >
                   <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ED101C] shrink-0" />
@@ -179,7 +213,7 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
               {/* Botão Hamburger Mobile */}
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={toggleMobileMenu}
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation-menu"
                 aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
@@ -200,7 +234,7 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
         {mobileMenuOpen && (
           <>
             <div
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="lg:hidden fixed inset-0 bg-black/75 backdrop-blur-[3px] z-[-1]"
               aria-hidden="true"
             />
@@ -220,9 +254,13 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
                     <a
                       key={item.id}
                       href={item.href}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         setActiveSection(item.id);
-                        setMobileMenuOpen(false);
+                        navigateToSection(item.href, {
+                          closeOverlayIds: 'mobile-menu',
+                          onBeforeScroll: () => setMobileMenuOpen(false),
+                        });
                       }}
                       className={`px-4 py-3 rounded-xl text-base font-bold transition-colors flex items-center justify-between ${
                         isActive
@@ -245,7 +283,9 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)');
+                    onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)', {
+                      replaceOverlayIds: 'mobile-menu',
+                    });
                   }}
                   className="w-full bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold py-3.5 px-5 rounded-xl flex items-center justify-center shadow-red-glow-sm"
                 >
@@ -256,7 +296,7 @@ export default function NavbarAndHero({ onOpenEnrollModal, onOpenStudentPortal }
                     type="button"
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      onOpenStudentPortal();
+                      onOpenStudentPortal({ replaceOverlayIds: 'mobile-menu' });
                     }}
                     className="w-full bg-white/[0.08] hover:bg-white/[0.14] text-white font-bold py-3 px-4 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-sm"
                   >

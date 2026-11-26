@@ -1,15 +1,24 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import {
   Phone,
   X,
   CheckCircle2,
   Shield,
+  LogOut,
 } from 'lucide-react';
 import NavbarAndHero from './components/NavbarAndHero';
 import CoursesSection from './components/CoursesSection';
 import InstructorsShowcase from './components/InstructorsShowcase';
 import JourneyAndCertification from './components/JourneyAndCertification';
 import { BRAND_CONFIG, getWhatsAppUrl } from './data/blackData';
+import {
+  initNavigationHistory,
+  pushOverlayHistory,
+  dismissOverlayHistory,
+  pushViewTransition,
+  confirmExitSite,
+  cancelExitConfirm,
+} from './utils/navigationHistory';
 
 const StudentPortalLMS = lazy(() => import('./components/StudentPortalLMS'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
@@ -30,20 +39,55 @@ export default function App() {
   };
 
   const [currentProject, setCurrentProject] = useState(getInitialView);
+  const currentProjectRef = useRef(currentProject);
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   const [formNome, setFormNome] = useState('');
   const [formTelefone, setFormTelefone] = useState('');
 
   useEffect(() => {
-    const handlePopState = () => {
-      setCurrentProject(getInitialView());
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    currentProjectRef.current = currentProject;
+  }, [currentProject]);
+
+  useEffect(() => {
+    return initNavigationHistory({
+      getCurrentView: () => currentProjectRef.current,
+      onGoHome: () => {
+        setCurrentProject('landing');
+        const url = new URL(window.location.href);
+        url.searchParams.delete('view');
+        url.hash = '';
+        if (window.location.search !== url.search || window.location.hash) {
+          window.history.replaceState(
+            { ...(window.history.state || {}), __blackNav: true },
+            '',
+            url.toString()
+          );
+        }
+      },
+      onRequestExitConfirm: () => {
+        setExitConfirmOpen(true);
+      },
+      onCloseExitConfirm: () => {
+        setExitConfirmOpen(false);
+      },
+    });
   }, []);
 
-  const switchProject = (proj) => {
+  const handleStayInSite = () => {
+    setExitConfirmOpen(false);
+    cancelExitConfirm();
+  };
+
+  const handleConfirmExit = () => {
+    setExitConfirmOpen(false);
+    confirmExitSite();
+  };
+
+  const switchProject = (proj, rawOpts = {}) => {
+    const opts = rawOpts && typeof rawOpts === 'object' && !rawOpts.nativeEvent ? rawOpts : {};
+    const prevProj = currentProjectRef.current;
     setCurrentProject(proj);
     const url = new URL(window.location.href);
     if (proj === 'landing') {
@@ -51,12 +95,30 @@ export default function App() {
     } else {
       url.searchParams.set('view', proj);
     }
-    window.history.pushState({}, '', url);
+    pushViewTransition(
+      prevProj,
+      proj,
+      url.toString(),
+      (returnY) => {
+        setCurrentProject(prevProj);
+        window.setTimeout(() => {
+          window.scrollTo({ top: returnY ?? 0, behavior: 'smooth' });
+        }, 80);
+      },
+      opts
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenEnrollModal = () => {
+  const handleOpenEnrollModal = (_courseName, rawOpts = {}) => {
+    const opts = rawOpts && typeof rawOpts === 'object' && !rawOpts.nativeEvent ? rawOpts : {};
     setEnrollModalOpen(true);
+    pushOverlayHistory('enroll-modal', () => setEnrollModalOpen(false), opts);
+  };
+
+  const handleCloseEnrollModal = () => {
+    setEnrollModalOpen(false);
+    dismissOverlayHistory('enroll-modal');
   };
 
   const handleEnrollSubmit = (e) => {
@@ -65,7 +127,7 @@ export default function App() {
       formTelefone || 'WhatsApp'
     }). Quero realizar minha inscrição / garantir minha vaga no *${CURSO_UNICO_OFICIAL}* (${MODALIDADE_UNICA_OFICIAL}).`;
     window.open(getWhatsAppUrl(msg), '_blank', 'noopener,noreferrer');
-    setEnrollModalOpen(false);
+    handleCloseEnrollModal();
   };
 
   return (
@@ -92,7 +154,7 @@ export default function App() {
           <>
             <NavbarAndHero
               onOpenEnrollModal={handleOpenEnrollModal}
-              onOpenStudentPortal={() => switchProject('aluno')}
+              onOpenStudentPortal={(opts) => switchProject('aluno', opts)}
             />
 
             <main>
@@ -100,7 +162,7 @@ export default function App() {
               <InstructorsShowcase />
               <JourneyAndCertification
                 onOpenEnrollModal={handleOpenEnrollModal}
-                onOpenStudentPortal={() => switchProject('aluno')}
+                onOpenStudentPortal={(opts) => switchProject('aluno', opts)}
                 showTestimonialsPreview={false}
               />
             </main>
@@ -125,7 +187,7 @@ export default function App() {
       ===================================================================== */}
       {enrollModalOpen && (
         <div
-          onClick={() => setEnrollModalOpen(false)}
+          onClick={handleCloseEnrollModal}
           className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
@@ -151,7 +213,7 @@ export default function App() {
               </div>
               <button
                 type="button"
-                onClick={() => setEnrollModalOpen(false)}
+                onClick={handleCloseEnrollModal}
                 className="p-2 rounded-lg bg-white/5 hover:bg-[#ED101C] text-white transition-colors"
                 aria-label="Fechar janela de inscrição"
               >
@@ -229,7 +291,7 @@ export default function App() {
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setEnrollModalOpen(false)}
+                  onClick={handleCloseEnrollModal}
                   className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-semibold text-white"
                 >
                   Cancelar
@@ -243,6 +305,57 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          MODAL DE CONFIRMAÇÃO DE SAÍDA — QUANDO JÁ ESTÁ NO INÍCIO DA PÁGINA
+      ===================================================================== */}
+      {exitConfirmOpen && (
+        <div
+          onClick={handleStayInSite}
+          className="fixed inset-0 z-[90] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-modal-saida"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-[#111218] border border-[#ED101C]/70 rounded-3xl p-6 shadow-[0_24px_70px_rgba(0,0,0,0.95),0_0_36px_rgba(237,16,28,0.22)] text-center space-y-5 my-auto"
+          >
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-[#1F070A] border border-[#ED101C]/60 flex items-center justify-center text-[#ED101C] shadow-[0_0_20px_rgba(237,16,28,0.3)]">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="block text-[10px] font-mono uppercase tracking-widest text-[#ED101C] font-bold">
+                BLACK Treinamentos • Resgate & APH
+              </span>
+              <h3 id="titulo-modal-saida" className="font-display font-extrabold text-xl text-white">
+                Você quer sair?
+              </h3>
+              <p className="text-sm text-white/75 leading-relaxed">
+                Você já está no início da página principal. Tem certeza que quer sair do site?
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleConfirmExit}
+                className="py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-sm font-bold text-white/85 hover:text-white transition-colors"
+              >
+                Sim, sair
+              </button>
+              <button
+                type="button"
+                onClick={handleStayInSite}
+                className="py-3 px-4 rounded-xl bg-[#ED101C] hover:bg-[#C80B15] text-sm font-extrabold text-white shadow-red-glow-sm transition-colors"
+              >
+                Não, ficar
+              </button>
+            </div>
           </div>
         </div>
       )}

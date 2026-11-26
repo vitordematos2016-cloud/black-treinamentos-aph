@@ -39,6 +39,11 @@ import {
   FAQ_OFICIAL,
   getWhatsAppUrl,
 } from '../data/blackData';
+import {
+  navigateToSection,
+  pushOverlayHistory,
+  dismissOverlayHistory,
+} from '../utils/navigationHistory';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -143,6 +148,36 @@ export default function JourneyAndCertification({
   const openCertificatePreview = () => {
     setCertFocusSide(null);
     setShowCertModal(true);
+    pushOverlayHistory('cert-modal', () => {
+      setCertFocusSide(null);
+      setShowCertModal(false);
+    });
+  };
+
+  const closeCertificatePreview = () => {
+    setCertFocusSide(null);
+    setShowCertModal(false);
+    dismissOverlayHistory(['cert-zoom', 'cert-modal']);
+  };
+
+  const openCertZoom = (side) => {
+    setCertFocusSide(side);
+    pushOverlayHistory('cert-zoom', () => setCertFocusSide(null));
+  };
+
+  const closeCertZoom = () => {
+    setCertFocusSide(null);
+    dismissOverlayHistory('cert-zoom');
+  };
+
+  const openDevModal = () => {
+    setShowDevModal(true);
+    pushOverlayHistory('dev-modal', () => setShowDevModal(false));
+  };
+
+  const closeDevModal = () => {
+    setShowDevModal(false);
+    dismissOverlayHistory('dev-modal');
   };
 
   return (
@@ -471,7 +506,7 @@ export default function JourneyAndCertification({
       {/* Modal em Quadrante com Desfoque de Fundo para Visualizar Frente & Verso com Zoom */}
       {showCertModal && (
         <div
-          onClick={() => setShowCertModal(false)}
+          onClick={closeCertificatePreview}
           className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5"
           role="dialog"
           aria-modal="true"
@@ -498,7 +533,7 @@ export default function JourneyAndCertification({
 
               <button
                 type="button"
-                onClick={() => setShowCertModal(false)}
+                onClick={closeCertificatePreview}
                 className="p-2 rounded-xl bg-white/10 hover:bg-[#ED101C] text-white transition-colors shrink-0"
                 aria-label="Fechar visualização do certificado"
               >
@@ -513,7 +548,7 @@ export default function JourneyAndCertification({
                 <div className="flex flex-col gap-3 items-center">
                   <button
                     type="button"
-                    onClick={() => setCertFocusSide('frente')}
+                    onClick={() => openCertZoom('frente')}
                     className="group relative w-full rounded-2xl overflow-hidden border border-amber-400/70 hover:border-amber-300 bg-white shadow-lg transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
                   >
                     <img
@@ -529,7 +564,7 @@ export default function JourneyAndCertification({
 
                   <button
                     type="button"
-                    onClick={() => setCertFocusSide('verso')}
+                    onClick={() => openCertZoom('verso')}
                     className="group relative w-full rounded-2xl overflow-hidden border border-amber-400/70 hover:border-amber-300 bg-white shadow-lg transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
                   >
                     <img
@@ -547,7 +582,7 @@ export default function JourneyAndCertification({
                 /* Modo Zoom Focado na Face Clicada */
                 <div className="flex flex-col items-center gap-3">
                   <div
-                    onClick={() => setCertFocusSide(null)}
+                    onClick={closeCertZoom}
                     role="button"
                     tabIndex={0}
                     title="Toque para voltar à visão completa"
@@ -576,7 +611,7 @@ export default function JourneyAndCertification({
               <div className="px-4 py-2.5 border-t border-white/10 bg-[#12131B] flex items-center justify-between gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setCertFocusSide(null)}
+                  onClick={closeCertZoom}
                   className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-[#ED101C]" />
@@ -1044,6 +1079,10 @@ export default function JourneyAndCertification({
                       <li key={navItem.href}>
                         <a
                           href={navItem.href}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigateToSection(navItem.href);
+                          }}
                           className="group flex items-center gap-2 p-2 xl:p-1.5 rounded-xl bg-[#0C0D12] border border-white/[0.07] hover:border-[#ED101C]/45 hover:text-white transition-all"
                         >
                           <span className="w-6 h-6 rounded-lg bg-[#190508] border border-[#ED101C]/45 flex items-center justify-center text-[#ED101C] shadow-[0_0_10px_rgba(237,16,28,0.16)] group-hover:bg-[#ED101C] group-hover:text-white transition-all shrink-0">
@@ -1060,7 +1099,7 @@ export default function JourneyAndCertification({
                     <li className="col-span-2 lg:col-span-1 xl:col-span-2">
                       <button
                         type="button"
-                        onClick={onOpenStudentPortal}
+                        onClick={() => onOpenStudentPortal()}
                         className="group w-full flex items-center justify-center gap-2.5 p-2.5 rounded-xl bg-[#170609]/85 border border-[#ED101C]/50 hover:border-[#ED101C] hover:bg-[#ED101C]/15 text-white transition-all"
                       >
                         <span className="w-6 h-6 rounded-lg bg-[#190508] border border-[#ED101C]/55 flex items-center justify-center text-[#ED101C] shadow-[0_0_12px_rgba(237,16,28,0.2)] group-hover:bg-[#ED101C] group-hover:text-white transition-all shrink-0">
@@ -1142,7 +1181,7 @@ export default function JourneyAndCertification({
               <div className="mt-5 pt-4 border-t border-white/[0.06] flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setShowDevModal(true)}
+                  onClick={openDevModal}
                   className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] text-white/45 hover:text-white/95 bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-[#ED101C]/45 transition-all duration-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#ED101C]"
                   title="Ver credencial do desenvolvedor Matos Soluções"
                 >
@@ -1166,7 +1205,7 @@ export default function JourneyAndCertification({
       ===================================================================== */}
       {showDevModal && (
         <div
-          onClick={() => setShowDevModal(false)}
+          onClick={closeDevModal}
           className="fixed inset-0 z-[80] bg-black/88 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
@@ -1193,7 +1232,7 @@ export default function JourneyAndCertification({
               </div>
               <button
                 type="button"
-                onClick={() => setShowDevModal(false)}
+                onClick={closeDevModal}
                 className="p-1.5 rounded-xl bg-white/10 hover:bg-[#ED101C] text-white transition-colors"
                 aria-label="Fechar cartão do desenvolvedor"
               >

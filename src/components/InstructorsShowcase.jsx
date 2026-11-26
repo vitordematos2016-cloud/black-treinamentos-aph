@@ -12,6 +12,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { BRAND_CONFIG, getWhatsAppUrl } from '../data/blackData';
+import { pushOverlayHistory, dismissOverlayHistory } from '../utils/navigationHistory';
 
 const INSTRUCTOR_CARDS = [
   {
@@ -68,6 +69,16 @@ export default function InstructorsShowcase() {
   const [inspectCard, setInspectCard] = useState(null);
   const audioCtxRef = useRef(null);
   const sectionRef = useRef(null);
+
+  const openInspectCard = (inst) => {
+    setInspectCard(inst);
+    pushOverlayHistory('inspect-card', () => setInspectCard(null));
+  };
+
+  const closeInspectCard = () => {
+    setInspectCard(null);
+    dismissOverlayHistory('inspect-card');
+  };
 
   // Entrada escalonada suave dos 5 crachás ao abrir o módulo de instrutores
   useEffect(() => {
@@ -443,7 +454,7 @@ export default function InstructorsShowcase() {
 
                   <button
                     type="button"
-                    onClick={() => setInspectCard(inst)}
+                    onClick={() => openInspectCard(inst)}
                     className="py-2.5 px-3.5 rounded-xl bg-[#111116] hover:bg-[#ED101C] border border-white/10 hover:border-[#ED101C] text-xs font-bold text-white/90 hover:text-white inline-flex items-center justify-center gap-1.5 transition-all"
                     title="Ampliar Frente e Verso lado a lado"
                   >
@@ -504,11 +515,15 @@ export default function InstructorsShowcase() {
       {/* MODAL DE INSPEÇÃO EM ALTA RESOLUÇÃO (FRENTE + VERSO LADO A LADO) */}
       {inspectCard && (
         <div
+          onClick={closeInspectCard}
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
         >
-          <div className="max-w-4xl w-full bg-[#121217] border border-white/15 rounded-3xl overflow-hidden shadow-2xl my-8">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-4xl w-full bg-[#121217] border border-white/15 rounded-3xl overflow-hidden shadow-2xl my-8"
+          >
             <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between gap-4">
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#ED101C] font-bold block">
@@ -520,7 +535,7 @@ export default function InstructorsShowcase() {
               </div>
               <button
                 type="button"
-                onClick={() => setInspectCard(null)}
+                onClick={closeInspectCard}
                 className="p-2 rounded-xl bg-white/10 hover:bg-[#ED101C] text-white transition-colors"
                 aria-label="Fechar visualização"
               >
