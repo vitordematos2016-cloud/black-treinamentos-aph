@@ -14,10 +14,11 @@ export default function Hero3DLogoStage() {
   const [phase, setPhase] = useState('climbing');
   const [clickPulse, setClickPulse] = useState(false);
 
-  // Estado de arraste interativo (Drag & Elastic Spring-Back)
+  // Estado de arraste interativo (Desktop mouse: Drag & Elastic Spring-Back | Mobile touch: rolagem 100% livre + toque para raios)
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0, rotY: 0, rotX: 0 });
   const dragStartRef = useRef({ clientX: 0, clientY: 0 });
+  const touchTapRef = useRef(null);
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -147,37 +148,44 @@ export default function Hero3DLogoStage() {
     };
   }, [triggerRedLightning]);
 
-  // Ao clicar/tocar em cima da Logo 3D (PC ou Mobile), dispara raios modernos e discretos saindo dela
-  const handlePointerDown = (e) => {
-    if (phase !== 'idle') return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    dragStartRef.current = {
-      clientX: e.clientX - dragOffset.x,
-      clientY: e.clientY - dragOffset.y,
-    };
-
-    // Calcula o ponto clicado/tocado relativo ao canvas para que os raios saiam de onde clicou e das letras
+  const fireLightningAtPointer = (clientX, clientY) => {
     let clickOrigin = null;
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         clickOrigin = {
-          x: ((e.clientX - rect.left) / rect.width) * canvasRef.current.width,
-          y: ((e.clientY - rect.top) / rect.height) * canvasRef.current.height,
+          x: ((clientX - rect.left) / rect.width) * canvasRef.current.width,
+          y: ((clientY - rect.top) / rect.height) * canvasRef.current.height,
         };
       }
     }
 
-    // Dispara pulso moderno e discreto de raios ao clicar/tocar (tanto Mobile quanto PC)
     setClickPulse(true);
     if (pulseTimeoutRef.current) clearTimeout(pulseTimeoutRef.current);
     pulseTimeoutRef.current = setTimeout(() => setClickPulse(false), 450);
     triggerRedLightning(460, 0.72, 4, clickOrigin);
   };
 
+  // No Mobile (touch), NUNCA captura o dedo no pointerDown para não travar a rolagem vertical da página!
+  const handlePointerDown = (e) => {
+    if (phase !== 'idle') return;
+
+    if (e.pointerType === 'touch') {
+      touchTapRef.current = { clientX: e.clientX, clientY: e.clientY, time: Date.now() };
+      return;
+    }
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    dragStartRef.current = {
+      clientX: e.clientX - dragOffset.x,
+      clientY: e.clientY - dragOffset.y,
+    };
+    fireLightningAtPointer(e.clientX, e.clientY);
+  };
+
   const handlePointerMove = (e) => {
-    if (!isDragging) return;
+    if (!isDragging || e.pointerType === 'touch') return;
     const rawX = e.clientX - dragStartRef.current.clientX;
     const rawY = e.clientY - dragStartRef.current.clientY;
 
@@ -197,7 +205,24 @@ export default function Hero3DLogoStage() {
     });
   };
 
-  const handlePointerUpOrCancel = () => {
+  const handlePointerUp = (e) => {
+    if (e.pointerType === 'touch') {
+      const start = touchTapRef.current;
+      touchTapRef.current = null;
+      // Só dispara os raios se foi um toque rápido (sem arrastar para rolar a página)
+      if (start && Math.hypot(e.clientX - start.clientX, e.clientY - start.clientY) < 12) {
+        fireLightningAtPointer(e.clientX, e.clientY);
+      }
+      return;
+    }
+
+    if (!isDragging) return;
+    setIsDragging(false);
+    setDragOffset({ x: 0, y: 0, rotY: 0, rotX: 0 });
+  };
+
+  const handlePointerCancel = () => {
+    touchTapRef.current = null;
     if (!isDragging) return;
     setIsDragging(false);
     setDragOffset({ x: 0, y: 0, rotY: 0, rotX: 0 });
@@ -287,16 +312,16 @@ export default function Hero3DLogoStage() {
           className="pointer-events-none absolute inset-0 w-full h-full z-30"
         />
 
-        {/* 3. A LOGO 3D SEM BORDAS ESCURAS */}
+        {/* 3. A LOGO 3D SEM BORDAS ESCURAS (touch-pan-y garante rolagem vertical 100% lisa no celular!) */}
         <div
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUpOrCancel}
-          onPointerCancel={handlePointerUpOrCancel}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           role="button"
           tabIndex={0}
-          aria-label="Logo 3D interativa BLACK Treinamentos. Clique ou toque para disparar raios ou arraste para movimentar."
-          className={`relative z-10 w-[96%] h-[92%] flex items-center justify-center touch-none ${
+          aria-label="Logo 3D interativa BLACK Treinamentos. Toque para disparar raios."
+          className={`relative z-10 w-[96%] h-[92%] flex items-center justify-center touch-pan-y ${
             phase === 'climbing'
               ? 'anim-climb-spin-clean cursor-wait'
               : phase === 'lightning'

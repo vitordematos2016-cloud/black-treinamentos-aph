@@ -979,6 +979,17 @@ export default function StudentPortalLMS({ onBackToLanding }) {
         {/* Logo BLACK HD — Centralizada no Mobile, Tablet e Desktop! */}
         <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3.5 sm:pb-4 border-b border-white/10 flex items-center justify-center lg:flex-col lg:items-center lg:text-center relative overflow-hidden shrink-0">
           <div className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-52 h-32 rounded-full bg-[#ED101C]/14 blur-2xl" />
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="lg:hidden absolute left-3.5 top-4 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-[#ED101C]/65 text-[11px] font-bold text-white active:scale-95 transition-all"
+              aria-label="Voltar ao Site Principal"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#ED101C]" />
+              <span>Site</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigateTo('inicio')}
@@ -987,7 +998,7 @@ export default function StudentPortalLMS({ onBackToLanding }) {
             <img
               src="/assets/logo-header-sharp.png"
               alt="BLACK Treinamentos - Resgate & APH"
-              className="w-[154px] sm:w-[178px] lg:w-[214px] h-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] contrast-[1.08] brightness-[1.05]"
+              className="w-[136px] sm:w-[178px] lg:w-[214px] h-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] contrast-[1.08] brightness-[1.05]"
               style={{ imageRendering: '-webkit-optimize-contrast' }}
             />
             <span className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-white/80 font-semibold mt-2.5 sm:mt-3 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10">
@@ -1123,9 +1134,9 @@ export default function StudentPortalLMS({ onBackToLanding }) {
       ===================================================================== */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* TOPBAR LIMPA */}
-        <header className="bg-[#0B0C10]/95 backdrop-blur-md border-b border-white/10 px-5 sm:px-8 py-4 flex items-center justify-between gap-4 sticky top-0 z-30">
-          <div>
-            <h1 className="font-display font-extrabold text-lg sm:text-xl text-white">
+        <header className="bg-[#0B0C10]/95 backdrop-blur-md border-b border-white/10 px-4 sm:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-3 sticky top-0 z-30">
+          <div className="min-w-0">
+            <h1 className="font-display font-extrabold text-base sm:text-xl text-white truncate">
               {selectedModuleIndex !== null
                 ? `Sala de Aula — Módulo ${activeModule.modulo}`
                 : activeNav === 'inicio'
@@ -1142,12 +1153,25 @@ export default function StudentPortalLMS({ onBackToLanding }) {
                             ? 'Avisos e Suporte'
                             : 'Meu Perfil'}
             </h1>
-            <p className="text-xs text-white/55 hidden sm:block">
+            <p className="text-xs text-white/55 hidden sm:block truncate">
               Curso de Socorrista — Atendimento Pré-Hospitalar (APH) • {curso.turma}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="px-2.5 sm:px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-[#ED101C]/65 text-white text-[11px] sm:text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap transition-all hover:-translate-y-0.5"
+                title="Voltar para a Página Inicial"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ED101C] shrink-0" />
+                <span className="sm:hidden">Voltar</span>
+                <span className="hidden sm:inline">Voltar ao Site</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleBellClick}
@@ -1156,7 +1180,7 @@ export default function StudentPortalLMS({ onBackToLanding }) {
                   ? 'Você já está na aba de Avisos e Comunicados'
                   : 'Ver Comunicados Oficiais da Turma'
               }
-              className={`relative p-2.5 rounded-xl border transition-all ${activeNav === 'ajuda' && selectedModuleIndex === null
+              className={`relative p-2 sm:p-2.5 rounded-xl border transition-all ${activeNav === 'ajuda' && selectedModuleIndex === null
                 ? 'bg-[#ED101C]/20 border-[#ED101C] text-[#FF545E] shadow-[0_0_16px_rgba(237,16,28,0.4)]'
                 : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
                 }`}
@@ -1174,7 +1198,7 @@ export default function StudentPortalLMS({ onBackToLanding }) {
               href={getWhatsAppUrl(`Olá! Sou ${session.nome}, aluno do Curso de Socorrista APH (200h), e preciso de ajuda.`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1A080B] hover:bg-[#ED101C] border border-[#ED101C]/50 text-white text-xs font-bold transition-colors"
+              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1A080B] hover:bg-[#ED101C] border border-[#ED101C]/50 text-white text-xs font-bold transition-colors whitespace-nowrap"
             >
               <Phone className="w-3.5 h-3.5" />
               <span>Falar no WhatsApp</span>
