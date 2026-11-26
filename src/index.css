@@ -681,3 +681,50 @@
   border-radius: 9999px;
   border: 2px solid #050505;
 }
+
+/* ============================================================================
+   CALENDÁRIO DE MESA 3D (FOLHA PRESA NO TOPO VIRANDO PARA TRÁS)
+   ============================================================================ */
+.flip-cal-unit {
+  perspective: 260px;
+}
+
+@keyframes deskCalendarFlipBack {
+  0% {
+    transform: rotateX(0deg) translateY(0px);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  45% {
+    transform: rotateX(68deg) translateY(-1px);
+    opacity: 0.92;
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: rotateX(125deg) translateY(-3px);
+    opacity: 0;
+    filter: brightness(0.65);
+  }
+}
+
+.desk-cal-sheet-flip {
+  transform-origin: top center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  animation: deskCalendarFlipBack 0.48s cubic-bezier(0.32, 0.08, 0.24, 1) forwards;
+}
+
+@keyframes deskCalendarUnderReveal {
+  0% {
+    filter: brightness(0.72);
+    transform: scale(0.97);
+  }
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+.desk-cal-under-reveal {
+  animation: deskCalendarUnderReveal 0.42s ease-out forwards;
+}

@@ -69,10 +69,10 @@ export const CONTEUDO_PROGRAMATICO_200H = [
 export const DIFERENCIAIS_LIST = [
   {
     id: 'instrutor',
-    icon: 'UserCheck',
-    title: 'Instrutor Especialista em APH',
-    shortTitle: 'Instrutor Especialista\nem APH',
-    description: 'Equipe de 5 profissionais com vivência real em resgate, defesa civil, SAMU e combate a incêndio.',
+    icon: 'Users',
+    title: 'Instrutores Especialistas em APH',
+    shortTitle: 'Instrutores Especialistas\nem APH',
+    description: 'Equipe de profissionais com vivência real em resgate, defesa civil, SAMU e combate a incêndio.',
   },
   {
     id: 'certificacao',
@@ -424,31 +424,24 @@ export const EQUIPE_INSTRUTORES = [
   },
 ];
 
-// SEÇÃO 06 — Como Funcionam os Cursos
+// SEÇÃO 06 — Como Funcionam os Cursos (3 Etapas Diretas)
 export const COMO_FUNCIONA_PASSOS = [
   {
     passo: '01',
-    titulo: 'Escolha o Curso',
-    descricao:
-      'Consulte os treinamentos disponíveis (como o Curso de Socorrista de 200h em 11 módulos), local e cronograma da turma.',
-    icone: 'Search',
-  },
-  {
-    passo: '02',
     titulo: 'Realize a Inscrição',
     descricao:
       'Fale com nossa equipe oficial ou preencha sua pré-inscrição para confirmar vagas, documentação e condições de parcelamento (até 10x no boleto ou cartão).',
     icone: 'UserPlus',
   },
   {
-    passo: '03',
+    passo: '02',
     titulo: 'Aulas Teóricas e Práticas',
     descricao:
       'Participe das aulas teóricas, estudo de casos e simulações realísticas supervisionadas pelos 5 instrutores da BLACK Treinamentos.',
     icone: 'BookOpen',
   },
   {
-    passo: '04',
+    passo: '03',
     titulo: 'Certificado Oficial 200h',
     descricao:
       'Cumprindo as exigências e avaliações, você recebe seu Certificado de Conclusão (Frente e Verso com Conteúdo Programático de 200h) assinado pela diretoria.',
@@ -456,66 +449,49 @@ export const COMO_FUNCIONA_PASSOS = [
   },
 ];
 
-// SEÇÃO 09 — As 10 Perguntas Frequentes Oficiais
+// SEÇÃO 09 — Perguntas Frequentes (Top 4 Principais visíveis + Dúvidas Complementares sob demanda)
 export const FAQ_OFICIAL = [
   {
     numero: '01',
-    pergunta: 'Os treinamentos são online, presenciais ou híbridos?',
+    pergunta: 'Como funciona o formato híbrido das aulas?',
     resposta:
-      'A BLACK Treinamentos trabalha com formações presenciais, híbridas e capacitações práticas. O Curso de Socorrista (APH - 200 horas), por exemplo, possui aulas presenciais aos sábados à tarde (Prédio da Unicesumar), unindo teoria, estudo de casos e simulações realísticas supervisionadas.',
+      'O Curso de Socorrista (200h) une aulas teóricas online no Portal do Aluno com práticas presenciais aos sábados à tarde na Unicesumar, ao longo de 8 meses de formação.',
   },
   {
     numero: '02',
-    pergunta: 'Quem pode participar dos cursos?',
+    pergunta: 'Quem pode participar do treinamento?',
     resposta:
-      'Nossos treinamentos atendem tanto o público interessado em ingressar na área de Atendimento Pré-Hospitalar e Resgate quanto profissionais da saúde, estudantes de Enfermagem, bombeiros civis, brigadistas, motoristas e cidadãos que desejam saber agir com segurança em emergências.',
+      'Qualquer pessoa que deseje aprender a salvar vidas, além de estudantes da saúde, socorristas, bombeiros civis, brigadistas e motoristas profissionais.',
   },
   {
     numero: '03',
-    pergunta: 'Como realizo minha inscrição?',
+    pergunta: 'Quais são as formas de pagamento?',
     resposta:
-      'Você pode clicar em qualquer botão "Inscreva-se agora" desta página para iniciar seu atendimento direto pelo nosso WhatsApp oficial (45) 99986-7555 ou enviar seus dados no formulário rápido de pré-inscrição para confirmarmos sua vaga na turma.',
+      'Parcelamento em até 10x no boleto ou no cartão de crédito, além de pagamento à vista via Pix com confirmação rápida de vaga.',
   },
   {
     numero: '04',
-    pergunta: 'Quais são as formas de pagamento?',
+    pergunta: 'O certificado de 200h tem validade nacional?',
     resposta:
-      'Oferecemos condições acessíveis com possibilidade de parcelamento em até 10x no boleto ou no cartão de crédito (conforme divulgado para a turma do Curso de Socorrista), além de pagamento à vista via Pix.',
+      'Sim. Concluindo as aulas e avaliações, você recebe certificado frente e verso de 200 horas válido em todo o Brasil conforme a Lei nº 9.394/96 (LDB).',
   },
   {
     numero: '05',
-    pergunta: 'Como funcionam as aulas e qual é a carga horária do Curso de Socorrista?',
+    pergunta: 'Existem atividades práticas e avaliação final?',
     resposta:
-      'O Curso de Socorrista possui Carga Horária Total de 200 horas, dividida em 11 módulos completos: Introdução ao APH e Legislação (10h), Anatomia e Fisiologia (20h), Avaliação da Vítima e Sinais Vitais (20h), Suporte Básico de Vida - SBV (30h), Vias Aéreas (20h), Hemorragias (20h), Traumatismos e Imobilizações (25h), Urgências Clínicas (20h), Emergências Pediátricas (15h), Resgate e Transporte (15h) e Simulações Realísticas Supervisionadas (5h).',
+      'Sim. A metodologia inclui simulações realísticas supervisionadas pelos 5 instrutores, estudos de caso e avaliação teórica e prática.',
   },
   {
     numero: '06',
-    pergunta: 'Existem atividades e avaliação final?',
+    pergunta: 'Posso estudar e acompanhar tudo pelo celular?',
     resposta:
-      'Sim. Nossa metodologia inclui aulas teóricas e práticas, estudo de casos, simulações realísticas e avaliação de aprendizagem teórica e prática ao longo da formação.',
+      'Sim. O Portal do Aluno possui versão otimizada para celular para assistir aulas, baixar apostilas, acompanhar presença e acessar seu certificado.',
   },
   {
     numero: '07',
-    pergunta: 'Como é o certificado emitido pela BLACK Treinamentos?',
+    pergunta: 'Como realizo minha inscrição ou tiro dúvidas?',
     resposta:
-      'O Certificado de Conclusão oficial é emitido em frente e verso pela BLACK Treinamentos Resgate e APH (Guaraniaçu - PR, CNPJ 58.279.230/0001-10), assinado pelo Diretor e Instrutor Responsável Cleverson da Cruz e pelo(a) Instrutor(a), discriminando as 200 horas e os 11 módulos concluídos, em conformidade com a Lei nº 9.394/96 (LDB) para cursos livres de capacitação e atualização profissional.',
-  },
-  {
-    numero: '08',
-    pergunta: 'Por quanto tempo terei acesso ao curso?',
-    resposta:
-      'Nos cursos presenciais/híbridos, o acompanhamento ocorre durante todo o cronograma da turma (8 meses de duração no Curso de Socorrista aos sábados) e pelo ambiente digital do Portal do Aluno.',
-  },
-  {
-    numero: '09',
-    pergunta: 'Posso estudar e acompanhar pelo celular?',
-    resposta:
-      'Sim! Nossa plataforma e o Portal do Aluno contam com versão Mobile responsiva para você consultar módulos, apostilas, calendário de aulas, avaliações e seu certificado direto pelo celular.',
-  },
-  {
-    numero: '10',
-    pergunta: 'Como falar com o suporte?',
-    resposta:
-      'Nosso canal oficial de atendimento rápido ao aluno e interessados é o WhatsApp (45) 99986-7555, com sede em Guaraniaçu – PR.',
+      'Converse diretamente com nossa coordenação oficial pelo WhatsApp para tirar suas últimas dúvidas e confirmar sua vaga agora mesmo:',
+    ctaLabel: 'Falar Agora e Realizar Inscrição',
   },
 ];

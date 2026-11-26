@@ -6,11 +6,6 @@ import {
   Clock,
   MapPin,
   CreditCard,
-  FileText,
-  Phone,
-  Award,
-  Image as ImageIcon,
-  X,
 } from 'lucide-react';
 import {
   BRAND_CONFIG,
@@ -21,7 +16,6 @@ import {
 gsap.registerPlugin(ScrollTrigger);
 
 export default function CoursesSection({ onOpenEnrollModal }) {
-  const [previewMedia, setPreviewMedia] = useState(null);
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -47,16 +41,16 @@ export default function CoursesSection({ onOpenEnrollModal }) {
   return (
     <section
       ref={sectionRef}
-      id="cursos"
-      className="relative bg-[#050505] text-white py-16 sm:py-20 lg:py-24 border-b border-white/10 overflow-hidden select-none"
+      id="detalhes-turma"
+      className="relative bg-[#050505] text-white pt-3 pb-12 sm:pb-16 lg:py-20 border-b border-white/10 overflow-hidden select-none scroll-mt-28 sm:scroll-mt-32"
       aria-labelledby="titulo-curso-socorrista"
     >
       {/* =====================================================================
-          1. DETALHES DIAGONAIS VERMELHOS NOS CANTOS (SUPERIOR ESQUERDO E INFERIOR DIREITO)
+          1. DETALHES DIAGONAIS VERMELHOS NOS CANTOS (SUPERIOR ESQUERDO NO DESKTOP E INFERIOR DIREITO)
              Fiel à imagem de referência `ref-layout-secao-curso-socorrista.jpg`
       ===================================================================== */}
       <div
-        className="pointer-events-none absolute -top-12 -left-16 w-64 h-64 opacity-70 z-10"
+        className="hidden lg:block pointer-events-none absolute -top-12 -left-16 w-64 h-64 opacity-70 z-10"
         aria-hidden="true"
       >
         <div className="w-3 h-72 bg-gradient-to-b from-[#ED101C] via-[#ED101C]/60 to-transparent rotate-[32deg] transform origin-top-left shadow-[0_0_25px_#ED101C]" />
@@ -108,39 +102,32 @@ export default function CoursesSection({ onOpenEnrollModal }) {
           3. CONTEÚDO EM 2 COLUNAS (ESQUERDA: DADOS E CTAs | CENTRO: SOCORRISTA | DIREITA: CARD 11 MÓDULOS)
       ===================================================================== */}
       <div className="relative z-20 max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-6 min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-6 lg:gap-6 lg:min-h-[600px]">
           {/* =================================================================
-              COLUNA ESQUERDA (lg:col-span-5): Centralizada no Mobile, Alinhada à Esquerda no Desktop
+              COLUNA ESQUERDA (lg:col-span-5):
+              - No Mobile: Mantém direto "Garantir Inscrição" + Panfleto/Cartaz logo abaixo da arte nova
+              - No Desktop: Cabeçalho + 4 Cards de Informações da Turma + CTAs
           ================================================================= */}
           <div className="curso-reveal lg:col-span-5 flex flex-col justify-between space-y-5 text-center lg:text-left">
-            <div className="flex flex-col items-center lg:items-start">
-              {/* Pílula Superior */}
-              <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#160709]/95 border border-[#ED101C]/65 text-[#ED101C] text-[10.5px] sm:text-xs font-extrabold uppercase tracking-wider mb-4 shadow-[0_0_16px_rgba(237,16,28,0.16)]">
+            <div className="hidden lg:flex flex-col items-start">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#160709]/95 border border-[#ED101C]/65 text-[#ED101C] text-xs font-extrabold uppercase tracking-wider mb-3 shadow-[0_0_16px_rgba(237,16,28,0.16)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ED101C] animate-pulse shrink-0" />
-                <span>TURMA PRESENCIAL • CARGA HORÁRIA: 200H</span>
+                <span>CRONOGRAMA OFICIAL • TURMA 2027</span>
               </div>
 
-              {/* Título em 3 linhas com (APH) em vermelho */}
               <h2
                 id="titulo-curso-socorrista"
-                className="font-display font-extrabold text-[1.95rem] sm:text-4xl xl:text-[2.65rem] text-white leading-[1.12] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]"
+                className="font-display font-extrabold text-3xl xl:text-[2.2rem] text-white leading-[1.15] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]"
               >
-                Curso de Socorrista —
+                Detalhes da Turma
                 <br />
-                Atendimento Pré-Hospitalar
-                <br />
-                <span className="text-[#ED101C] drop-shadow-[0_0_20px_rgba(237,16,28,0.4)]">(APH)</span>
+                <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(237,16,28,0.4)]">
+                  &amp; Grade Oficial
+                </span>
               </h2>
 
-              {/* Descrição Metodológica */}
-              <p className="mt-4 text-white/85 text-sm sm:text-[15px] max-w-md lg:max-w-none leading-relaxed drop-shadow">
-                Aulas teóricas e práticas, estudo de casos, simulações realísticas e avaliação de aprendizagem.
-                Formação com certificado de <strong className="text-white">200 horas</strong> distribuídas em{' '}
-                <strong className="text-white">11 módulos práticos e teóricos</strong>.
-              </p>
-
-              {/* Grade 2x2 dos 4 Cards de Informações da Turma */}
-              <div className="mt-6 w-full grid grid-cols-2 gap-2.5 sm:gap-3 text-left">
+              {/* Grade 2x2 dos 4 Cards de Informações da Turma (Desktop) */}
+              <div className="mt-5 w-full grid grid-cols-2 gap-3 text-left">
                 {/* Card 1: Início Previsto */}
                 <div className="group bg-[#101015]/90 backdrop-blur-md border border-[#ED101C]/35 hover:border-[#ED101C]/80 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(237,16,28,0.16)] rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3 transition-all duration-200">
                   <Calendar className="w-5 h-5 text-[#ED101C] shrink-0 sm:mt-0.5 group-hover:scale-110 transition-transform" />
@@ -164,7 +151,7 @@ export default function CoursesSection({ onOpenEnrollModal }) {
                     <strong className="text-white text-xs sm:text-sm font-extrabold leading-snug block">
                       200 Horas • 8 meses
                       <br />
-                      (Sábados)
+                      (Sábados à tarde)
                     </strong>
                   </div>
                 </div>
@@ -176,8 +163,8 @@ export default function CoursesSection({ onOpenEnrollModal }) {
                     <span className="text-[10px] sm:text-[11px] text-[#B8B8B8] uppercase font-semibold block">
                       LOCAL DAS AULAS
                     </span>
-                    <strong className="text-white text-xs sm:text-sm font-extrabold">
-                      Prédio da Unicesumar
+                    <strong className="text-white text-xs sm:text-sm font-extrabold leading-snug block">
+                      Unicesumar + Portal Online
                     </strong>
                   </div>
                 </div>
@@ -199,99 +186,58 @@ export default function CoursesSection({ onOpenEnrollModal }) {
               </div>
             </div>
 
-            {/* Bloco de Botões Centralizados no Mobile */}
-            <div className="pt-2 space-y-3 w-full">
-              {/* Botão Principal Vermelho com Shimmer Discreto */}
+            {/* Botão Principal de Inscrição Centralizado abaixo dos 4 cards */}
+            <div className="pt-1 lg:pt-2 w-full flex justify-center">
               <a
                 href={getWhatsAppUrl(
-                  'Olá! Vi o Curso de Socorrista (APH - 200 horas) com início previsto para 13/02/2027 aos sábados na Unicesumar e quero garantir minha inscrição!'
+                  'Olá! Vi o Curso de Socorrista (APH - 200 horas • Formato Híbrido) com início previsto para 13/02/2027 e quero garantir minha inscrição!'
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="cta-btn-shimmer w-full sm:w-auto sm:min-w-[310px] bg-[#ED101C] hover:bg-[#D40D18] text-white font-bold text-sm sm:text-base px-6 sm:px-7 py-4 rounded-2xl shadow-[0_8px_25px_rgba(237,16,28,0.38)] hover:shadow-[0_10px_32px_rgba(237,16,28,0.58)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 inline-flex items-center justify-center gap-2.5"
+                className="cta-btn-shimmer w-full sm:w-auto sm:min-w-[300px] bg-[#ED101C] hover:bg-[#D40D18] text-white font-extrabold text-base px-8 py-4 rounded-2xl shadow-[0_8px_25px_rgba(237,16,28,0.4)] hover:shadow-[0_10px_32px_rgba(237,16,28,0.6)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 inline-flex items-center justify-center text-center"
               >
-                <Phone className="w-4 h-4 shrink-0" />
-                <span>Garantir Inscrição • (45) 99986-7555</span>
+                <span>Garantir Inscrição</span>
               </a>
-
-              {/* Linha Inferior de 3 Botões Secundários Centralizados no Mobile */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
-                <a
-                  href="#certificacao"
-                  className="bg-[#111115]/90 hover:bg-amber-500/15 backdrop-blur-md text-amber-400 font-bold text-xs sm:text-sm px-4 py-3 rounded-xl border border-amber-500/60 hover:border-amber-400 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
-                >
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span>Ver Certificado 200h</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPreviewMedia({
-                      title: 'Panfleto Oficial — Formação de Socorrista (APH)',
-                      src: '/assets/jornal-socorrista.png',
-                    })
-                  }
-                  className="bg-[#111115]/90 hover:bg-white/10 backdrop-blur-md text-white/90 hover:text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/15 hover:border-white/30 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
-                >
-                  <FileText className="w-4 h-4 text-[#ED101C]" />
-                  <span>Panfleto</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPreviewMedia({
-                      title: 'Cartaz Oficial da Turma — Curso de Socorrista (13/02/2027)',
-                      src: '/assets/cartaz-socorrista.jpeg',
-                    })
-                  }
-                  className="bg-[#111115]/90 hover:bg-white/10 backdrop-blur-md text-white/90 hover:text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/15 hover:border-white/30 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
-                >
-                  <ImageIcon className="w-4 h-4 text-[#ED101C]" />
-                  <span>Cartaz</span>
-                </button>
-              </div>
             </div>
           </div>
 
           {/* Espaço Central no Desktop (lg:col-span-2) */}
           <div className="hidden lg:block lg:col-span-2 min-h-[520px]" aria-hidden="true" />
 
-          {/* Imagem Dedicada Mobile Única (Limpa, Nítida e Enquadrada sem Duplicação) */}
-          <div className="block lg:hidden relative w-full max-w-[360px] mx-auto rounded-3xl overflow-hidden border border-[#ED101C]/40 shadow-[0_14px_40px_rgba(0,0,0,0.85)]">
-            <img
-              src="/assets/socorrista-costas-ambulancia-mobile.png"
-              alt="Socorrista da BLACK Treinamentos com capacete vermelho, Estrela da Vida e ambulância ao fundo"
-              className="w-full h-auto object-cover object-top"
-            />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#050505] to-transparent" />
-          </div>
-
           {/* =================================================================
               COLUNA DIREITA (lg:col-span-5): Card Flutuante com Borda Vermelha
               "Conteúdo Programático (11 Módulos • 200h)"
           ================================================================= */}
-          <div className="curso-reveal lg:col-span-5 lg:mt-4">
-            <div className="bg-[#0B0B0F]/92 backdrop-blur-xl border border-[#ED101C]/65 hover:border-[#ED101C]/90 rounded-3xl p-4 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(237,16,28,0.14)] transition-colors duration-300">
-              {/* Topo do Card (Quebra limpa no Mobile sem estourar 390px; 1 linha no Desktop xl+) */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 text-center sm:text-left">
+          <div className="curso-reveal lg:col-span-5 lg:mt-0">
+            <div className="relative overflow-hidden bg-[#0B0B0F]/95 backdrop-blur-xl border border-[#ED101C]/70 hover:border-[#ED101C] rounded-3xl p-4 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(237,16,28,0.18)] transition-colors duration-300">
+              {/* Brilho atmosférico discreto no topo do card */}
+              <div
+                className="pointer-events-none -top-12 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-[#ED101C]/20 blur-[48px] absolute"
+                aria-hidden="true"
+              />
+
+              {/* Topo do Card com Contraste Branco -> Vermelho e Badge 200h */}
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 text-center sm:text-left">
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#ED101C] block">
-                    GRADE OFICIAL DO CERTIFICADO
+                  <span className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#FF7A82]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ED101C] animate-pulse shrink-0" />
+                    <span>GRADE OFICIAL DO CERTIFICADO</span>
                   </span>
-                  <h3 className="font-display font-extrabold text-base sm:text-[17px] xl:text-[18.5px] text-white mt-0.5 leading-snug xl:whitespace-nowrap">
-                    Conteúdo Programático (11 Módulos • 200h)
+                  <h3 className="font-display font-extrabold text-lg sm:text-[19px] xl:text-[20px] text-white mt-1 leading-snug">
+                    Conteúdo Programático{' '}
+                    <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent">
+                      (11 Módulos)
+                    </span>
                   </h3>
                 </div>
-                <span className="self-center sm:self-auto px-3 py-1 rounded-lg bg-[#ED101C] text-[11px] font-mono font-extrabold text-white shrink-0 shadow-[0_0_12px_rgba(237,16,28,0.5)]">
+                <span className="self-center sm:self-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ED101C] to-[#C80B15] border border-white/20 text-[11px] font-mono font-extrabold text-white shrink-0 shadow-[0_0_16px_rgba(237,16,28,0.55)]">
                   TOTAL: 200h
                 </span>
               </div>
 
-              {/* Tabela dos 11 Módulos com Destaque Tátil na Linha ao Passar o Mouse */}
-              <div className="bg-[#121217]/95 border border-white/10 rounded-2xl overflow-hidden">
-                <div className="grid grid-cols-12 bg-[#2B070B] border-b border-white/10 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-mono font-bold uppercase text-white/90">
+              {/* Tabela dos 11 Módulos com Badges nos Números e Barra Inferior de Total */}
+              <div className="relative z-10 bg-[#121217]/95 border border-white/10 rounded-2xl overflow-hidden shadow-inner">
+                <div className="grid grid-cols-12 bg-[#2B070B] border-b border-white/10 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-mono font-bold uppercase text-white/95">
                   <span className="col-span-2">MÓD.</span>
                   <span className="col-span-8">CONTEÚDO</span>
                   <span className="col-span-2 text-right">C.H.</span>
@@ -303,10 +249,12 @@ export default function CoursesSection({ onOpenEnrollModal }) {
                       key={item.modulo}
                       className="grid grid-cols-12 px-3 sm:px-4 py-3 text-xs sm:text-[13px] items-center border-l-2 border-l-transparent hover:border-l-[#ED101C] hover:bg-[#ED101C]/[0.08] transition-all duration-150"
                     >
-                      <span className="col-span-2 font-mono font-bold text-[#ED101C]">
-                        {item.modulo}
+                      <span className="col-span-2">
+                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-[#ED101C]/15 border border-[#ED101C]/35 font-mono font-bold text-[11px] text-[#FF6B73]">
+                          {item.modulo}
+                        </span>
                       </span>
-                      <span className="col-span-8 font-medium text-white/90 pr-2">
+                      <span className="col-span-8 font-medium text-white/95 pr-2">
                         {item.titulo}
                       </span>
                       <span className="col-span-2 text-right font-mono font-bold text-white">
@@ -315,46 +263,21 @@ export default function CoursesSection({ onOpenEnrollModal }) {
                     </div>
                   ))}
                 </div>
+
+                <div className="bg-[#1A0609]/95 border-t border-[#ED101C]/30 px-3 sm:px-4 py-2 flex items-center justify-between text-[10.5px] sm:text-[11px] font-mono">
+                  <span className="text-white/75">Role a lista • 11 módulos completos</span>
+                  <span className="font-extrabold text-[#FF6B73]">200h Certificadas</span>
+                </div>
               </div>
 
               {/* Nota Legal LDB */}
-              <p className="mt-4 text-[11px] text-[#B8B8B8] leading-relaxed text-center sm:text-left">
+              <p className="relative z-10 mt-4 text-[11px] text-[#B8B8B8] leading-relaxed text-center sm:text-left">
                 * {BRAND_CONFIG.legalBasis}
               </p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Lightbox para Visualizar o Panfleto ou Cartaz Oficial */}
-      {previewMedia && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="max-w-4xl w-full bg-[#121216] border border-white/15 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
-              <h4 className="font-bold text-sm sm:text-base text-white">{previewMedia.title}</h4>
-              <button
-                type="button"
-                onClick={() => setPreviewMedia(null)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-[#ED101C] text-white transition-colors"
-                aria-label="Fechar visualização"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 max-h-[82vh] overflow-y-auto flex justify-center bg-black">
-              <img
-                src={previewMedia.src}
-                alt={previewMedia.title}
-                className="max-h-[75vh] w-auto object-contain rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

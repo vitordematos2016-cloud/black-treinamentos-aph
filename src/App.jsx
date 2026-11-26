@@ -15,9 +15,9 @@ const StudentPortalLMS = lazy(() => import('./components/StudentPortalLMS'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 const CURSO_UNICO_OFICIAL =
-  'Curso de Socorrista - APH (Turma 13/02/2027 • Sábados na Unicesumar)';
+  'Curso de Socorrista - APH (Turma 13/02/2027 • Sábados na Unicesumar + Online)';
 const MODALIDADE_UNICA_OFICIAL =
-  'Presencial (Aos sábados à tarde • Prédio da Unicesumar)';
+  'Híbrido (Práticas aos sábados na Unicesumar + Portal do Aluno Online)';
 
 export default function App() {
   const getInitialView = () => {
@@ -125,12 +125,16 @@ export default function App() {
       ===================================================================== */}
       {enrollModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setEnrollModalOpen(false)}
+          className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-modal-inscricao"
         >
-          <div className="bg-[#121216] border border-white/15 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#121216] border border-white/15 rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl my-auto"
+          >
             <div className="p-6 sm:p-7 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#ED101C]/15 border border-[#ED101C]/40 flex items-center justify-center text-[#ED101C]">
@@ -205,7 +209,7 @@ export default function App() {
                     Modalidade da Turma
                   </label>
                   <div className="w-full bg-[#08080B] border border-white/15 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-white/90 font-medium truncate">
-                    Presencial (Sábados • Unicesumar)
+                    Híbrido (Unicesumar + Online)
                   </div>
                 </div>
               </div>
@@ -217,7 +221,7 @@ export default function App() {
                 </div>
                 <p>
                   Início previsto em <strong>13/02/2027</strong> • Duração de <strong>8 meses (200h em 11 módulos)</strong> •
-                  Aulas aos <strong>sábados à tarde no Prédio da Unicesumar</strong> • Parcelamento em até{' '}
+                  Práticas aos <strong>sábados à tarde no Prédio da Unicesumar + Portal Online</strong> • Parcelamento em até{' '}
                   <strong>10x no boleto ou cartão de crédito</strong>.
                 </p>
               </div>

@@ -22,7 +22,6 @@ import {
   Activity,
   HeartHandshake,
   Scale,
-  Check,
   Home,
   GraduationCap,
   Users,
@@ -31,6 +30,8 @@ import {
   User,
   Code2,
   X,
+  Maximize2,
+  RotateCcw,
 } from 'lucide-react';
 import {
   BRAND_CONFIG,
@@ -38,7 +39,6 @@ import {
   FAQ_OFICIAL,
   getWhatsAppUrl,
 } from '../data/blackData';
-import OfficialCertificateViewer from './OfficialCertificateViewer';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -55,14 +55,15 @@ export default function JourneyAndCertification({
   showTestimonialsPreview,
 }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [showAllFaq, setShowAllFaq] = useState(false);
   const [faqSymbolPulse, setFaqSymbolPulse] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
-  const [certCode, setCertCode] = useState('');
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [certFocusSide, setCertFocusSide] = useState(null); // null (ambos no quadrante) | 'frente' | 'verso'
 
   const devWhatsAppUrl = `https://wa.me/5545998378795?text=${encodeURIComponent(
     'Olá vim pelo site do Black Treinamentos Resgate e APH e gostaria de desenvolver meu site!'
   )}`;
-  const [certResult, setCertResult] = useState(null);
   const comoFuncionaRef = useRef(null);
   const certificacaoRef = useRef(null);
   const contatoRef = useRef(null);
@@ -141,36 +142,17 @@ export default function JourneyAndCertification({
 
   const handleStepClick = (stepIdx) => {
     if (stepIdx === 0) {
-      document.getElementById('cursos')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (stepIdx === 1) {
       onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)');
-    } else if (stepIdx === 2) {
+    } else if (stepIdx === 1) {
       document.getElementById('equipe')?.scrollIntoView({ behavior: 'smooth' });
-    } else if (stepIdx === 3) {
+    } else if (stepIdx === 2) {
       document.getElementById('certificacao')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const handleVerifyCertificate = (e) => {
-    e.preventDefault();
-    const cleaned = certCode.trim().toUpperCase();
-    if (!cleaned) return;
-    if (cleaned === 'BLACK-2026-APH01' || cleaned.startsWith('BLACK-')) {
-      setCertResult({
-        valid: true,
-        code: cleaned,
-        curso: 'Curso de Socorrista — Atendimento Pré-Hospitalar (200 Horas)',
-        status:
-          'Certificado autêntico emitido pela BLACK Treinamentos Resgate e APH (Guaraniaçu-PR • CNPJ 58.279.230/0001-10), assinado por Cleverson da Cruz.',
-      });
-    } else {
-      setCertResult({
-        valid: false,
-        code: cleaned,
-        status:
-          'Código não localizado na base demonstrativa. Use BLACK-2026-APH01 para testar ou fale conosco pelo WhatsApp (45) 99986-7555.',
-      });
-    }
+  const openCertificatePreview = () => {
+    setCertFocusSide(null);
+    setShowCertModal(true);
   };
 
   return (
@@ -185,7 +167,7 @@ export default function JourneyAndCertification({
       <section
         ref={comoFuncionaRef}
         id="como-funciona"
-        className="relative bg-[#050505] text-white py-20 sm:py-24 border-b border-white/10 overflow-hidden select-none"
+        className="relative bg-[#050505] text-white py-20 sm:py-24 border-b border-white/10 overflow-hidden select-none scroll-mt-28 sm:scroll-mt-32"
         aria-labelledby="titulo-como-funciona"
       >
         {/* Feixes Diagonais Vermelhos nos Cantos (Superior Esquerdo e Inferior Direito) */}
@@ -205,28 +187,31 @@ export default function JourneyAndCertification({
           <div className="w-2.5 h-72 bg-gradient-to-t from-[#ED101C]/90 to-transparent rotate-[32deg] transform origin-bottom-right translate-x-36 -translate-y-72" />
         </div>
 
-        {/* Imagem de Fundo: Socorrista Enquadrado na Direita (Capacete 100% visível) + Ambulância com Giroflex Discreto */}
+        {/* Imagem de Fundo: Socorrista Original + Ambulância Desfocada Limpa na Direita (sem corte espelhado) */}
         <div
-          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#050505]"
           aria-hidden="true"
         >
-          {/* Desktop: object-right-top preserva o capacete vermelho inteiro e o giroflex da ambulância */}
-          <img
-            src="/assets/como-funciona-bg-direita.jpg?v=2"
-            alt=""
-            className="hidden lg:block w-full h-full object-cover object-right-top"
-          />
-          {/* Giroflex sutil respirando sobre as luzes desfocadas da ambulância ao fundo */}
-          <div className="hidden lg:block cta-beacon-left absolute top-[18%] right-[28%] w-36 h-16 rounded-full bg-[#ED101C]/35 blur-[36px]" />
-          <div className="hidden lg:block cta-beacon-right absolute top-[18%] right-[21%] w-36 h-16 rounded-full bg-white/20 blur-[36px]" />
-          {/* Mobile: Versão vertical enquadrada no topo sem esticar ao longo dos 4 cards */}
-          <div className="block lg:hidden relative w-full h-[360px]">
+          {/* Desktop: Foto original limpa posicionada à direita com fusão suave para a esquerda */}
+          <div className="hidden lg:block absolute inset-y-0 right-0 w-[62%] xl:w-[58%] overflow-hidden">
             <img
-              src="/assets/socorrista-costas-ambulancia-mobile.png"
+              src="/assets/socorrista-costas-ambulancia.jpg"
               alt=""
-              className="w-full h-full object-cover object-top opacity-25"
+              className="w-full h-full object-cover object-[58%_top]"
+              style={{
+                WebkitMaskImage:
+                  'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 26%, black 52%, black 100%)',
+                maskImage:
+                  'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 26%, black 52%, black 100%)',
+              }}
             />
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#050505] to-transparent" />
+            {/* Giroflex sutil respirando exatamente sobre as luzes da ambulância à direita */}
+            <div className="cta-beacon-left absolute top-[15%] right-[22%] w-32 h-16 rounded-full bg-[#ED101C]/35 blur-[34px]" />
+            <div className="cta-beacon-right absolute top-[15%] right-[13%] w-32 h-16 rounded-full bg-white/20 blur-[34px]" />
+          </div>
+          {/* Mobile (<lg): Fundo preto escuro limpo com leve brilho tático central sincronizado com o restante do site */}
+          <div className="block lg:hidden relative w-full h-[260px]">
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[300px] h-[160px] rounded-full bg-[#ED101C]/12 blur-[80px]" />
           </div>
           <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-[#050505] to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#050505] to-transparent" />
@@ -244,9 +229,9 @@ export default function JourneyAndCertification({
               id="titulo-como-funciona"
               className="font-display font-extrabold text-[1.95rem] sm:text-4xl lg:text-[3.1rem] text-white leading-tight tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]"
             >
-              Como Funcionam os{' '}
-              <span className="text-[#ED101C] italic drop-shadow-[0_0_20px_rgba(237,16,28,0.4)]">
-                Treinamentos
+              Como Funcionam{' '}
+              <span className="italic bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(237,16,28,0.4)]">
+                os Treinamentos
               </span>
             </h2>
 
@@ -254,11 +239,11 @@ export default function JourneyAndCertification({
               {BRAND_CONFIG.methodology}
             </p>
 
-            {/* Linha de Pulso ECG Vermelha Viva com Faísca Percorrendo o Traçado */}
-            <div className="mt-4 flex items-center justify-center lg:justify-start w-full">
+            {/* Linha de Pulso ECG Vermelha Viva Alinhada à Largura Completa do Título & Subtítulo */}
+            <div className="mt-4 flex items-center justify-center lg:justify-start w-full max-w-[680px]">
               <svg
                 viewBox="0 0 520 36"
-                className="w-full max-w-[460px] h-8 ecg-glow overflow-visible"
+                className="w-full h-8 ecg-glow overflow-visible"
                 fill="none"
                 aria-hidden="true"
               >
@@ -290,12 +275,12 @@ export default function JourneyAndCertification({
             </div>
           </div>
 
-          {/* Grade dos 4 Cards Interativos (01 -> Cursos | 02 -> Inscrição | 03 -> Equipe | 04 -> Certificação) */}
-          <div className="w-full lg:w-[79%] xl:w-[78%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {/* Grade dos 3 Cards Interativos (01 -> Inscrição | 02 -> Equipe | 03 -> Certificação) */}
+          <div className="w-full lg:w-[76%] xl:w-[75%] grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {COMO_FUNCIONA_PASSOS.map((item, idx) => {
               const StepIcon = STEP_ICONS[item.icone] || CheckCircle2;
-              const isLastCard = idx === 3;
-              const stepHints = ['Ver Curso', 'Inscrever-se', 'Ver Equipe', 'Ver Certificado'];
+              const isLastCard = idx === COMO_FUNCIONA_PASSOS.length - 1;
+              const stepHints = ['Inscrever-se', 'Ver Equipe', 'Ver Certificado'];
               return (
                 <button
                   type="button"
@@ -333,7 +318,7 @@ export default function JourneyAndCertification({
                   </div>
 
                   <div className="mt-6 pt-3.5 border-t border-white/10 flex items-center justify-between text-[11px] text-white/75 group-hover:text-white font-mono tracking-wider transition-colors">
-                    <span>ETAPA {idx + 1} DE 4</span>
+                    <span>ETAPA {idx + 1} DE {COMO_FUNCIONA_PASSOS.length}</span>
                     <span className="inline-flex items-center gap-1 text-[#ED101C] font-bold">
                       <span className="opacity-0 group-hover:opacity-100 text-[10px] transition-opacity">
                         {stepHints[idx]}
@@ -362,7 +347,7 @@ export default function JourneyAndCertification({
       <section
         ref={certificacaoRef}
         id="certificacao"
-        className="relative bg-[#050505] text-white py-14 sm:py-16 lg:py-20 border-b border-white/10 overflow-hidden select-none"
+        className="relative bg-[#050505] text-white py-14 sm:py-16 lg:py-20 border-b border-white/10 overflow-hidden select-none scroll-mt-28 sm:scroll-mt-32"
         aria-labelledby="titulo-certificacao"
       >
         {/* Feixe Diagonal Vermelho no Canto Inferior Direito */}
@@ -374,28 +359,20 @@ export default function JourneyAndCertification({
           <div className="w-2.5 h-72 bg-gradient-to-t from-[#ED101C]/90 to-transparent rotate-[32deg] transform origin-bottom-right translate-x-36 -translate-y-72" />
         </div>
 
-        {/* Imagem de Fundo NÍTIDA (Sem Blur): Dois Socorristas + Prancha Amarela + Ambulância na Extrema Esquerda */}
+        {/* Brilhos atmosféricos táticos sincronizados com o restante da página */}
         <div
           className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
           aria-hidden="true"
         >
-          {/* Desktop / Tablet: Enquadrada na extrema esquerda sem blur */}
-          <img
-            src="/assets/certificacao-bg-esquerda.jpg?v=6"
-            alt=""
-            className="hidden lg:block w-full h-full object-cover object-left-bottom"
-          />
-          {/* Pulso sutil sobre o giroflex vermelho da ambulância no canto superior esquerdo */}
-          <div className="hidden lg:block cta-beacon-left absolute top-[14%] left-[12%] w-28 h-16 rounded-full bg-[#ED101C]/35 blur-[32px]" />
-          {/* No Mobile (<lg), removemos o fundo duplicado esticado para exibir a foto dos socorristas nítida uma única vez em destaque */}
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[520px] h-[260px] rounded-full bg-[#ED101C]/12 blur-[120px]" />
           <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-[#050505] to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#050505] to-transparent" />
         </div>
 
-        <div className="relative z-10 max-w-[1540px] mx-auto px-4 sm:px-6 lg:pl-[200px] xl:pl-[235px] lg:pr-8 xl:pr-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 xl:gap-8 items-center">
-            {/* Coluna Esquerda (5 colunas no desktop; cabeçalho centralizado no Mobile) */}
-            <div className="cert-reveal lg:col-span-5 space-y-3.5">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            {/* Coluna 1 (Esquerda no Desktop / Topo no Mobile): Título + Subtítulo + Card "Ver Certificado Oficial" */}
+            <div className="cert-reveal lg:col-span-6 space-y-5">
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left space-y-3">
                 {/* Pílula Superior */}
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#190609]/95 border border-[#ED101C]/70 text-white/95 text-[10.5px] sm:text-xs font-extrabold uppercase tracking-wider shadow-[0_0_15px_rgba(237,16,28,0.2)]">
@@ -409,132 +386,200 @@ export default function JourneyAndCertification({
                 >
                   Certificado de Conclusão
                   <br />
-                  <span className="text-[#ED101C] drop-shadow-[0_0_18px_rgba(237,16,28,0.4)]">
+                  <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(237,16,28,0.4)]">
                     BLACK Treinamentos
                   </span>
                 </h2>
 
-                <p className="text-white/90 text-xs sm:text-sm xl:text-[14.5px] max-w-md lg:max-w-none leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+                <p className="text-white/90 text-xs sm:text-sm xl:text-[15px] max-w-md lg:max-w-lg leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
                   Ao concluir o <strong className="text-white">Curso de Socorrista</strong>, o aluno recebe o certificado
-                  oficial da <strong className="text-white">{BRAND_CONFIG.corporateName}</strong> ({BRAND_CONFIG.cityState} • CNPJ {BRAND_CONFIG.cnpj}), com frente diplomada e verso discriminando todos os{' '}
-                  <strong className="text-white">11 módulos e as 200 horas de carga horária total.</strong>
+                  oficial da <strong className="text-white">{BRAND_CONFIG.corporateName}</strong>, com frente
+                  certificada e verso discriminando todos os{' '}
+                  <strong className="text-white">11 módulos e as 200 horas de cargas horárias totais.</strong>
                 </p>
               </div>
 
-              {/* 4 Pílulas dos Pilares com Ícones Vermelhos (Micro-interação tátil no hover) */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                {[
-                  { label: 'Prevenir', icon: ShieldCheck },
-                  { label: 'Orientar', icon: Target },
-                  { label: 'Socorrer', icon: Activity },
-                  { label: 'Salvar', icon: HeartHandshake },
-                ].map((pilar) => {
-                  const PilarIcon = pilar.icon;
-                  return (
-                    <div
-                      key={pilar.label}
-                      className="group px-3 py-2.5 rounded-xl bg-[#0B0B10]/95 backdrop-blur-md border border-[#ED101C]/65 hover:border-[#ED101C] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(237,16,28,0.28)] flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(0,0,0,0.7),inset_0_0_10px_rgba(237,16,28,0.12)] transition-all duration-200"
-                    >
-                      <PilarIcon className="w-4 h-4 text-[#ED101C] shrink-0 group-hover:scale-110 transition-transform" />
-                      <span className="text-xs sm:text-[13px] font-bold text-white">
-                        {pilar.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Cards Informativos com Borda Vermelha Brilhante (Recuados sutilmente à direita no Desktop para contornar o capacete do 2º socorrista e a vítima na prancha!) */}
-              <div className="space-y-3 pt-1 lg:ml-3 xl:ml-4">
-                {/* Card 1: 200 Horas em 11 Módulos no Verso */}
-                <div className="p-4 sm:p-4.5 rounded-2xl bg-[#0B0B10]/95 backdrop-blur-md border border-[#ED101C]/70 hover:border-[#ED101C] shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_0_15px_rgba(237,16,28,0.12)] flex items-start gap-3.5 transition-colors">
-                  <Clock className="w-6 h-6 text-[#ED101C] shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-display font-extrabold text-white text-sm sm:text-base xl:text-[17px] leading-snug">
-                      200 Horas em 11 Módulos no Verso
-                    </h3>
-                    <p className="text-xs text-white/85 mt-1 leading-relaxed">
-                      Inclui SBV (30h), Traumatismos e Imobilizações (25h), Anatomia (20h), Sinais Vitais (20h), Vias
-                      Aéreas (20h), Hemorragias (20h), Urgências Clínicas (20h), Pediatria (15h), Resgate (15h),
-                      Legislação (10h) e Simulações Realísticas (5h).
-                    </p>
-                  </div>
+              {/* Card Direto "Ver Certificado Oficial" (Centralizado para equilibrar com a foto ao lado) */}
+              <div className="w-full max-w-lg mx-auto lg:mx-0 bg-[#0B0B10]/95 backdrop-blur-xl p-5 sm:p-7 rounded-3xl border border-[#ED101C]/75 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_38px_rgba(237,16,28,0.2)] text-center space-y-4">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#190609] border border-[#ED101C]/55 text-white/95 text-[11px] font-mono font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ED101C] animate-pulse" />
+                  <span>Lei nº 9.394/96 (LDB) • 200h</span>
                 </div>
 
-                {/* Card 2: Base Legal Transparente — Lei nº 9.394/96 (LDB) com Ícone de Balança */}
-                <div className="p-4 sm:p-4.5 rounded-2xl bg-[#0B0B10]/95 backdrop-blur-md border border-[#ED101C]/70 hover:border-[#ED101C] shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_0_15px_rgba(237,16,28,0.12)] flex items-start gap-3.5 transition-colors">
-                  <Scale className="w-6 h-6 text-[#ED101C] shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-display font-extrabold text-white text-sm sm:text-base xl:text-[17px] leading-snug">
-                      Base Legal Transparente — Lei nº 9.394/96 (LDB)
-                    </h3>
-                    <p className="text-xs text-white/85 mt-1 leading-relaxed">
-                      {BRAND_CONFIG.legalBasis} Assinado por <strong className="text-white">Cleverson da Cruz</strong> ({BRAND_CONFIG.directorRole}) e pelo(a) Instrutor(a).
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-display font-extrabold text-xl sm:text-2xl text-white leading-snug">
+                  Certificado com Validade
+                  <br className="hidden sm:inline" />{' '}
+                  <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent">
+                    em Todo o Brasil
+                  </span>
+                </h3>
 
-                {/* Card 3: Validação de Código do Certificado */}
-                <form
-                  onSubmit={handleVerifyCertificate}
-                  className="p-4 sm:p-4.5 rounded-2xl bg-[#0B0B10]/95 backdrop-blur-md border border-[#ED101C]/70 shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_0_15px_rgba(237,16,28,0.12)]"
-                >
-                  <label
-                    htmlFor="cert-code-input"
-                    className="block text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-white mb-2"
+                <p className="text-xs sm:text-sm text-white/80 max-w-md mx-auto leading-relaxed">
+                  Confira o modelo oficial frente e verso antes de garantir sua vaga — carga horária completa e
+                  assinatura da diretoria.
+                </p>
+
+                <div className="flex justify-center pt-0.5">
+                  <button
+                    type="button"
+                    onClick={openCertificatePreview}
+                    className="btn-magnetic cta-btn-shimmer w-full sm:w-auto sm:min-w-[290px] px-7 py-4 rounded-2xl bg-[#ED101C] hover:bg-[#C80B15] text-white font-extrabold text-sm sm:text-base shadow-[0_10px_30px_rgba(237,16,28,0.45)] inline-flex items-center justify-center gap-2.5 transition-all"
                   >
-                    VALIDAÇÃO DE CÓDIGO DO CERTIFICADO (INTEGRADO AO PORTAL DO ALUNO):
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2.5">
-                    <input
-                      id="cert-code-input"
-                      type="text"
-                      value={certCode}
-                      onChange={(e) => setCertCode(e.target.value)}
-                      placeholder="Ex: BLACK-2026-APH01"
-                      className="flex-1 bg-[#050507] border border-white/15 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#ED101C] transition-colors"
-                    />
-                    <button
-                      type="submit"
-                      className="cta-btn-shimmer px-5 py-2 rounded-xl bg-[#ED101C] hover:bg-[#C80B15] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(237,16,28,0.55)] transition-colors"
-                    >
-                      <Check className="w-4 h-4 stroke-[3]" />
-                      <span>Validar</span>
-                    </button>
-                  </div>
-                  {certResult && (
-                    <div
-                      className={`mt-2.5 p-3 rounded-xl text-xs border ${certResult.valid
-                        ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
-                        : 'bg-amber-950/50 border-amber-500/40 text-amber-200'
-                        }`}
-                    >
-                      <strong>{certResult.code}:</strong> {certResult.status}
-                    </div>
-                  )}
-                </form>
-              </div>
-
-              {/* Imagem Vertical Dedicada Única no Mobile para exibir os socorristas nítidos no celular */}
-              <div className="block lg:hidden relative w-full max-w-[360px] mx-auto rounded-3xl overflow-hidden border border-[#ED101C]/40 shadow-[0_14px_40px_rgba(0,0,0,0.85)] mt-3">
-                <img
-                  src="/assets/hero-bg-socorristas-mobile.png"
-                  alt="Socorristas em atendimento pré-hospitalar com ambulância ao fundo"
-                  className="w-full h-auto object-cover"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#050505] to-transparent" />
+                    <Award className="w-5 h-5 shrink-0" />
+                    <span>Ver Certificado Oficial</span>
+                    <Maximize2 className="w-4 h-4 shrink-0 opacity-90" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Coluna Direita (7 colunas no desktop): Visualizador Interativo do Certificado Real (Frente e Verso) */}
-            <div className="cert-reveal lg:col-span-7">
-              <div className="bg-[#0B0B10]/95 backdrop-blur-xl p-4 sm:p-6 xl:p-7 rounded-3xl border border-[#ED101C]/75 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_38px_rgba(237,16,28,0.2)]">
-                <OfficialCertificateViewer defaultTab="ambos" showPrintButton={false} />
+            {/* Coluna 2 (Logo abaixo no Mobile / Direita no Desktop): Foto do Aluno segurando o Certificado Oficial */}
+            <div className="cert-reveal lg:col-span-6 flex justify-center">
+              <div className="relative w-full max-w-[380px] sm:max-w-[400px] lg:max-w-[410px] rounded-3xl overflow-hidden border border-[#ED101C]/45 shadow-[0_22px_65px_rgba(0,0,0,0.9),0_0_36px_rgba(237,16,28,0.18)]">
+                <img
+                  src="/assets/aluno-certificado-oficial.jpg"
+                  alt="Aluno formado pela BLACK Treinamentos segurando o Certificado de Conclusão Oficial de 200 horas"
+                  className="w-full h-auto block object-cover select-none"
+                />
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#050505]/85 via-[#050505]/30 to-transparent"
+                  aria-hidden="true"
+                />
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Modal em Quadrante com Desfoque de Fundo para Visualizar Frente & Verso com Zoom */}
+      {showCertModal && (
+        <div
+          onClick={() => setShowCertModal(false)}
+          className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visualização do Certificado Oficial"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[460px] sm:max-w-[540px] bg-[#0D0E14] border border-[#ED101C]/70 rounded-3xl overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95),0_0_40px_rgba(237,16,28,0.22)] flex flex-col max-h-[90vh]"
+          >
+            {/* Cabeçalho do Quadrante */}
+            <div className="px-4 sm:px-5 py-3 border-b border-white/10 bg-[#12131B] flex items-center justify-between gap-2 shrink-0">
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#ED101C] font-bold block">
+                  Certificado Oficial • 200h (LDB)
+                </span>
+                <h4 className="font-display font-extrabold text-sm sm:text-base text-white truncate">
+                  {certFocusSide === 'frente'
+                    ? 'Frente — Certificado Oficial'
+                    : certFocusSide === 'verso'
+                      ? 'Verso — 11 Módulos e 200h'
+                      : 'Toque na Frente ou Verso para ampliar'}
+                </h4>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCertModal(false)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-[#ED101C] text-white transition-colors shrink-0"
+                aria-label="Fechar visualização do certificado"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo do Quadrante */}
+            <div className="p-3 sm:p-4 overflow-y-auto bg-[#07070B] flex-1">
+              {!certFocusSide ? (
+                /* Visão Completa em 1 Página: Capa (Frente) em cima + Descritivo (Verso) embaixo */
+                <div className="flex flex-col gap-3 items-center">
+                  <button
+                    type="button"
+                    onClick={() => setCertFocusSide('frente')}
+                    className="group relative w-full rounded-2xl overflow-hidden border border-amber-400/70 hover:border-amber-300 bg-white shadow-lg transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
+                  >
+                    <img
+                      src="/assets/certificado-frente.png"
+                      alt="Frente do Certificado Oficial BLACK Treinamentos"
+                      className="w-full max-h-[34vh] object-contain mx-auto bg-white select-none"
+                    />
+                    <span className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full bg-black/85 border border-white/20 text-white text-[10px] font-bold inline-flex items-center gap-1 shadow">
+                      <Maximize2 className="w-3 h-3 text-[#ED101C]" />
+                      <span>Frente • Tocar p/ zoom</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCertFocusSide('verso')}
+                    className="group relative w-full rounded-2xl overflow-hidden border border-amber-400/70 hover:border-amber-300 bg-white shadow-lg transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C]"
+                  >
+                    <img
+                      src="/assets/certificado-verso.png"
+                      alt="Verso do Certificado Oficial BLACK Treinamentos com 11 Módulos"
+                      className="w-full max-h-[34vh] object-contain mx-auto bg-white select-none"
+                    />
+                    <span className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full bg-black/85 border border-white/20 text-white text-[10px] font-bold inline-flex items-center gap-1 shadow">
+                      <Maximize2 className="w-3 h-3 text-[#ED101C]" />
+                      <span>Verso • Tocar p/ zoom</span>
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                /* Modo Zoom Focado na Face Clicada */
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    onClick={() => setCertFocusSide(null)}
+                    role="button"
+                    tabIndex={0}
+                    title="Toque para voltar à visão completa"
+                    className="w-full rounded-2xl overflow-hidden border-2 border-amber-400 bg-white shadow-2xl cursor-zoom-out"
+                  >
+                    <img
+                      src={
+                        certFocusSide === 'frente'
+                          ? '/assets/certificado-frente.png'
+                          : '/assets/certificado-verso.png'
+                      }
+                      alt={
+                        certFocusSide === 'frente'
+                          ? 'Frente do Certificado Oficial Ampliada'
+                          : 'Verso do Certificado Oficial Ampliado'
+                      }
+                      className="w-full max-h-[68vh] object-contain mx-auto bg-white select-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Rodapé Simples de Navegação no Zoom */}
+            {certFocusSide && (
+              <div className="px-4 py-2.5 border-t border-white/10 bg-[#12131B] flex items-center justify-between gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCertFocusSide(null)}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-[#ED101C]" />
+                  <span>Ver os dois</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCertFocusSide(certFocusSide === 'frente' ? 'verso' : 'frente')
+                  }
+                  className="px-4 py-2 rounded-xl bg-[#ED101C] hover:bg-[#C80B15] text-white text-xs font-bold transition-colors"
+                >
+                  {certFocusSide === 'frente' ? 'Ir para Verso (200h)' : 'Ir para Frente (Capa)'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* =====================================================================
           SEÇÃO 08 — DEPOIMENTOS (Oculto por padrão conforme PDF)
@@ -595,7 +640,7 @@ export default function JourneyAndCertification({
       ===================================================================== */}
       <section
         id="faq"
-        className="relative bg-[#050505] text-white py-16 sm:py-20 border-b border-white/10 overflow-hidden select-none"
+        className="relative bg-[#050505] text-white py-16 sm:py-20 border-b border-white/10 overflow-hidden select-none scroll-mt-28 sm:scroll-mt-32"
         aria-labelledby="titulo-faq"
       >
         {/* Feixes Diagonais Vermelhos nos Cantos (Superior Esquerdo e Inferior Direito) */}
@@ -630,7 +675,7 @@ export default function JourneyAndCertification({
               <img
                 src="/assets/faq-estrela-com-reflexo.png?v=4"
                 alt="Símbolo da Estrela da Vida e Bastão de Esculápio em Neon Vermelho — BLACK Treinamentos"
-                className="faq-neon-breathe relative z-10 w-full max-w-[260px] sm:max-w-[360px] lg:max-w-[505px] h-auto object-contain transition-transform duration-500 hover:scale-[1.02]"
+                className="faq-neon-breathe relative z-10 w-full max-w-[210px] sm:max-w-[320px] lg:max-w-[430px] h-auto object-contain transition-transform duration-500 hover:scale-[1.02]"
               />
             </div>
 
@@ -646,7 +691,10 @@ export default function JourneyAndCertification({
                   id="titulo-faq"
                   className="font-display font-extrabold text-[1.95rem] sm:text-4xl lg:text-[2.65rem] text-white leading-tight tracking-tight"
                 >
-                  Perguntas <span className="text-[#ED101C] drop-shadow-[0_0_18px_rgba(237,16,28,0.4)]">Frequentes</span>
+                  Perguntas{' '}
+                  <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(237,16,28,0.4)]">
+                    Frequentes
+                  </span>
                 </h2>
                 <p className="mt-2 text-white/80 text-xs sm:text-sm max-w-md lg:max-w-xl leading-relaxed">
                   Respostas diretas sobre modalidades, carga horária de 200h, inscrições,
@@ -654,9 +702,9 @@ export default function JourneyAndCertification({
                 </p>
               </div>
 
-              {/* Lista Compacta das 10 Perguntas Frequentes com Transição de Altura Fluida */}
-              <div className="space-y-2">
-                {FAQ_OFICIAL.map((item, index) => {
+              {/* Top 4 Perguntas Principais + Expansão Opcional para Demais Dúvidas */}
+              <div className="space-y-2.5">
+                {(showAllFaq ? FAQ_OFICIAL : FAQ_OFICIAL.slice(0, 4)).map((item, index) => {
                   const isOpen = openFaqIndex === index;
                   return (
                     <div
@@ -673,7 +721,7 @@ export default function JourneyAndCertification({
                           aria-expanded={isOpen}
                           aria-controls={`faq-panel-${item.numero}`}
                           id={`faq-btn-${item.numero}`}
-                          className={`w-full px-4 sm:px-5 ${isOpen ? 'pt-3.5 pb-2' : 'py-2.5'
+                          className={`w-full px-4 sm:px-5 ${isOpen ? 'pt-3.5 pb-2' : 'py-3'
                             } text-left flex items-center justify-between gap-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED101C] rounded-xl transition-all`}
                         >
                           <div className="flex items-center gap-3">
@@ -706,7 +754,27 @@ export default function JourneyAndCertification({
                       >
                         <div className="overflow-hidden">
                           <div className="px-4 sm:px-5 pb-4 pt-0.5 text-xs sm:text-[13px] text-white/80 leading-relaxed">
-                            {item.resposta}
+                            <p>{item.resposta}</p>
+                            {item.ctaLabel && (
+                              <a
+                                href={getWhatsAppUrl(
+                                  'Olá! Estava tirando dúvidas na página e quero falar agora com a coordenação para realizar minha inscrição!'
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#190609]/95 hover:bg-[#ED101C] border border-[#ED101C]/65 hover:border-[#ED101C] text-white font-bold text-xs shadow-[0_0_16px_rgba(237,16,28,0.18)] transition-all duration-200"
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  className="w-3.5 h-3.5 text-[#ED101C] group-hover:text-white fill-current shrink-0 transition-colors"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.79 14.01c-.24.68-1.42 1.3-1.97 1.38-.5.07-1.15.1-1.86-.12-.43-.14-.98-.32-1.69-.63-2.97-1.28-4.91-4.29-5.06-4.49-.15-.2-1.21-1.61-1.21-3.07 0-1.46.76-2.18 1.03-2.48.27-.3.59-.37.79-.37.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.83 2.02.9 2.17.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.38-.44.51-.15.15-.3.31-.13.61.17.3.77 1.27 1.65 2.06 1.14 1.02 2.1 1.33 2.4 1.48.3.15.47.12.64-.07.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.27.1 1.72.81 2.01.96.3.15.49.22.56.35.07.12.07.72-.17 1.4z" />
+                                </svg>
+                                <span>{item.ctaLabel}</span>
+                                <ArrowRight className="w-3.5 h-3.5 text-[#ED101C] group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                              </a>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -714,6 +782,25 @@ export default function JourneyAndCertification({
                   );
                 })}
               </div>
+
+              {FAQ_OFICIAL.length > 4 && (
+                <div className="mt-4 flex justify-center lg:justify-start">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllFaq((prev) => !prev)}
+                    className="px-5 py-2.5 rounded-full bg-[#12131B] hover:bg-[#1A070A] border border-white/15 hover:border-[#ED101C]/60 text-xs font-bold text-white/90 inline-flex items-center gap-2 transition-colors"
+                  >
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-[#ED101C] transition-transform duration-300 ${showAllFaq ? 'rotate-180' : ''}`}
+                    />
+                    <span>
+                      {showAllFaq
+                        ? 'Mostrar apenas as 4 principais'
+                        : `Ver mais ${FAQ_OFICIAL.length - 4} dúvidas frequentes`}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -730,7 +817,7 @@ export default function JourneyAndCertification({
       <section
         ref={contatoRef}
         id="contato"
-        className="relative bg-[#050505] text-white pt-16 sm:pt-20 pb-28 sm:pb-24 overflow-hidden"
+        className="relative bg-[#050505] text-white pt-14 sm:pt-20 pb-10 sm:pb-20 overflow-hidden scroll-mt-28 sm:scroll-mt-32"
         aria-labelledby="titulo-cta-final"
       >
         {/* Feixes Diagonais Vermelhos Ancorados nas Extremidades da Tela (Superior Esquerdo e Inferior Direito) */}
@@ -788,14 +875,16 @@ export default function JourneyAndCertification({
                 >
                   Prepare-se para fazer a diferença
                   <br className="hidden sm:inline" /> quando{' '}
-                  <span className="text-[#ED101C] drop-shadow-[0_0_18px_rgba(237,16,28,0.45)]">
+                  <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(237,16,28,0.45)]">
                     cada segundo importa.
                   </span>
                 </h2>
 
-                <p className="mt-3.5 text-white/80 text-xs sm:text-sm lg:text-[14.5px] max-w-xl mx-auto leading-relaxed">
-                  Invista em conhecimento e esteja mais preparado para situações de emergência. Fale agora com nossa
-                  coordenação ou garanta sua vaga na próxima turma presencial.
+                <p className="mt-3.5 text-white/85 text-xs sm:text-sm lg:text-[15px] max-w-xl mx-auto leading-relaxed">
+                  Em uma emergência real, não há tempo para improviso —{' '}
+                  <strong className="text-white">quem domina o atendimento salva vidas.</strong> Fale agora com nossa
+                  coordenação e garanta sua vaga na próxima turma{' '}
+                  <strong className="text-white">(Online + Presencial).</strong>
                 </p>
 
                 {/* Linha de Batimento Cardíaco ECG ao Vivo ("cada segundo importa") */}
@@ -821,33 +910,22 @@ export default function JourneyAndCertification({
                   </svg>
                 </div>
 
-                {/* 3 Botões (Full-width centralizados no Mobile sem cortar dígito algum; 1 linha limpa no Desktop!) */}
-                <div className="mt-2 flex flex-col sm:flex-row flex-wrap xl:flex-nowrap items-center justify-center gap-2.5 w-full">
+                {/* Botão Único de Fechamento (Alta Urgência — Sem número e sem botões concorrentes) */}
+                <div className="mt-2 flex flex-col items-center justify-center gap-2.5 w-full">
                   <a
-                    href={getWhatsAppUrl()}
+                    href={getWhatsAppUrl(
+                      'Olá! Quero garantir minha vaga na próxima turma do Curso de Socorrista (APH - 200 horas) da BLACK Treinamentos!'
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-magnetic cta-btn-shimmer cta-sonar-pulse w-full sm:w-auto shrink-0 sm:whitespace-nowrap bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs xl:text-[12.5px] px-4 sm:px-5 py-3.5 sm:py-3 rounded-full inline-flex items-center justify-center gap-2 transition-colors text-center"
+                    className="btn-magnetic cta-btn-shimmer cta-sonar-pulse w-full sm:w-auto sm:min-w-[310px] bg-[#ED101C] hover:bg-[#C80B15] text-white font-extrabold text-sm sm:text-base px-7 py-4 rounded-full inline-flex items-center justify-center gap-2.5 shadow-[0_10px_32px_rgba(237,16,28,0.5)] transition-colors text-center"
                   >
-                    <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span>Falar pelo WhatsApp • {BRAND_CONFIG.whatsappDisplay}</span>
+                    <span>Quero Garantir Minha Vaga Agora</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
                   </a>
-
-                  <button
-                    type="button"
-                    onClick={() => onOpenEnrollModal('Curso de Socorrista - Atendimento Pré-Hospitalar (APH)')}
-                    className="btn-magnetic w-full sm:w-auto shrink-0 whitespace-nowrap bg-white text-[#050505] hover:bg-neutral-200 font-extrabold text-xs xl:text-[12.5px] px-4 py-3.5 sm:py-3 rounded-full inline-flex items-center justify-center gap-1.5 shadow-lg transition-colors"
-                  >
-                    <span>Fazer Pré-Inscrição Rápida</span>
-                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-                  </button>
-
-                  <a
-                    href="#cursos"
-                    className="w-full sm:w-auto shrink-0 whitespace-nowrap text-center px-4 py-3.5 sm:py-3 rounded-full bg-[#131317]/95 hover:bg-[#1E1E24] text-white/95 font-semibold text-xs xl:text-[12.5px] border border-white/20 hover:border-[#ED101C]/60 transition-colors"
-                  >
-                    Conhecer os treinamentos
-                  </a>
+                  <span className="text-[11px] font-mono text-white/65 tracking-wide">
+                    Atendimento direto no WhatsApp • Vagas limitadas
+                  </span>
                 </div>
               </div>
 
@@ -867,8 +945,8 @@ export default function JourneyAndCertification({
                 />
               </div>
 
-              {/* Versão Mobile / Tablet: Arte centralizada logo abaixo dos botões */}
-              <div className="block lg:hidden mt-7 flex justify-center relative">
+              {/* Versão Mobile / Tablet: Arte centralizada logo abaixo do botão */}
+              <div className="block lg:hidden mt-5 flex justify-center relative">
                 <img
                   src="/assets/contato-arte-socorrista.png"
                   alt="Socorrista, Ambulância e Estrela da Vida — BLACK Treinamentos"
@@ -879,84 +957,82 @@ export default function JourneyAndCertification({
           </div>
 
           {/* =====================================================================
-              RODAPÉ INSTITUCIONAL 1:1 (Fiel a `rodape-ref-exata.jpg`)
-              - Linhas horizontais de laser vermelho brilhante no topo e base
-              - Logo com divisória vertical luminosa, ícones em caixas neon vermelhas
-                em Navegação e Canais Oficiais (apenas WhatsApp + Sede).
+              RODAPÉ INSTITUCIONAL REFINADO
+              - Alinhamento simétrico no Mobile (Navegação em 2 colunas + Canais em cards limpos)
+              - Colunas equilibradas no Desktop com linha laser vermelha superior e inferior
           ===================================================================== */}
-          <footer className="contato-reveal relative mt-16 pt-12 pb-6">
+          <footer className="contato-reveal relative mt-14 sm:mt-16 pt-10 sm:pt-12 pb-2">
             {/* Linha Laser Vermelha Superior */}
             <div
               className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#ED101C] to-transparent shadow-[0_0_16px_rgba(237,16,28,0.85)]"
               aria-hidden="true"
             />
 
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 text-center md:text-left">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-12 pb-10 text-center lg:text-left items-start">
               {/* Coluna 1: Logo + Barra Vertical Neon + Descrição + CNPJ e Diretor */}
-              <div className="md:col-span-5 space-y-5 flex flex-col items-center md:items-start">
-                <div className="flex items-center justify-center md:justify-start gap-5">
+              <div className="lg:col-span-5 space-y-4 flex flex-col items-center lg:items-start">
+                <div className="flex items-center justify-center lg:justify-start gap-5">
                   <img
                     src="/assets/logo-header-sharp.png"
                     alt="BLACK Treinamentos - Resgate & APH"
-                    className="h-12 w-auto object-contain"
+                    className="h-11 sm:h-12 w-auto object-contain"
                   />
                   <span
-                    className="hidden md:block w-[2px] h-11 bg-gradient-to-b from-transparent via-[#ED101C] to-transparent shadow-[0_0_12px_#ED101C]"
+                    className="hidden lg:block w-[2px] h-11 bg-gradient-to-b from-transparent via-[#ED101C] to-transparent shadow-[0_0_12px_#ED101C]"
                     aria-hidden="true"
                   />
                 </div>
 
                 <p className="text-xs sm:text-[13.5px] text-white/80 max-w-md leading-relaxed">
                   <strong className="text-white font-extrabold">{BRAND_CONFIG.corporateName}</strong> — “{BRAND_CONFIG.certBackQuote}”{' '}
-                  Capacitações teóricas e práticas em Atendimento Pré-Hospitalar (APH), Curso de Socorrista (200h),
-                  Prevenção e Combate a Incêndio e Resgate.
+                  Formação de Socorristas em Atendimento Pré-Hospitalar (APH 200h), Resgate e Prevenção a Incêndios.
                 </p>
 
-                <div className="space-y-2.5 text-xs sm:text-[13px] text-white/85 flex flex-col items-center md:items-start">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-full max-w-sm lg:max-w-none space-y-2 text-xs sm:text-[13px] text-white/85 flex flex-col items-center lg:items-start pt-1">
+                  <div className="flex items-center gap-2.5">
                     <Building2 className="w-4 h-4 text-[#ED101C] shrink-0 drop-shadow-[0_0_8px_rgba(237,16,28,0.6)]" />
                     <span className="text-white/25">|</span>
                     <span>
                       CNPJ: <strong className="text-white font-semibold">{BRAND_CONFIG.cnpj}</strong> • {BRAND_CONFIG.cityState}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="flex items-center gap-2.5">
                     <User className="w-4 h-4 text-[#ED101C] shrink-0 drop-shadow-[0_0_8px_rgba(237,16,28,0.6)]" />
                     <span className="text-white/25">|</span>
                     <span>
-                      Diretor e Instrutor Responsável:{' '}
+                      Diretor Responsável:{' '}
                       <strong className="text-white font-bold">{BRAND_CONFIG.directorCivilName}</strong>
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Coluna 2: NAVEGAÇÃO com Barra Vertical Vermelha + Ícones Neon */}
-              <div className="md:col-span-3 space-y-4 flex flex-col items-center md:items-start">
-                <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-white flex items-center justify-center md:justify-start gap-2.5">
+              {/* Coluna 2: NAVEGAÇÃO (2 colunas no Mobile/Tablet e Desktop largo xl+; 1 coluna em Notebooks 1024-1279px para nunca truncar!) */}
+              <div className="lg:col-span-3 space-y-4 flex flex-col items-center lg:items-start w-full lg:pt-1">
+                <h3 className="font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider text-white flex items-center justify-center lg:justify-start gap-2.5">
                   <span className="w-[3px] h-4 rounded-full bg-[#ED101C] shadow-[0_0_10px_#ED101C]" />
                   <span>Navegação</span>
                 </h3>
-                <ul className="space-y-2.5 text-xs sm:text-[13.5px] text-white/80 inline-flex flex-col items-start">
+                <ul className="w-full max-w-sm lg:max-w-none grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2 sm:gap-2.5 text-xs sm:text-[12.5px] text-white/85 text-left">
                   {[
                     { href: '#inicio', label: 'Início', icon: Home },
-                    { href: '#cursos', label: 'Nossos Treinamentos (200h)', icon: GraduationCap },
-                    { href: '#equipe', label: 'Equipe de 5 Instrutores', icon: Users },
-                    { href: '#como-funciona', label: 'Como Funcionam os Cursos', icon: Layers },
-                    { href: '#certificacao', label: 'Certificado Oficial (Frente e Verso)', icon: Award },
-                    { href: '#faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle },
+                    { href: '#cursos', label: 'Turma 2027', icon: GraduationCap },
+                    { href: '#equipe', label: 'Instrutores', icon: Users },
+                    { href: '#como-funciona', label: 'Metodologia', icon: Layers },
+                    { href: '#certificacao', label: 'Certificado', icon: Award },
+                    { href: '#faq', label: 'FAQ', icon: HelpCircle },
                   ].map((navItem) => {
                     const NavIcon = navItem.icon;
                     return (
                       <li key={navItem.href}>
                         <a
                           href={navItem.href}
-                          className="group flex items-center gap-3 hover:text-white transition-colors"
+                          className="group flex items-center gap-2 p-2 xl:p-1.5 rounded-xl bg-[#0C0D12] border border-white/[0.07] hover:border-[#ED101C]/45 hover:text-white transition-all"
                         >
-                          <span className="w-7 h-7 rounded-lg bg-[#190508] border border-[#ED101C]/45 flex items-center justify-center text-[#ED101C] shadow-[0_0_12px_rgba(237,16,28,0.16)] group-hover:bg-[#ED101C] group-hover:text-white group-hover:shadow-[0_0_16px_rgba(237,16,28,0.6)] transition-all shrink-0">
+                          <span className="w-6 h-6 rounded-lg bg-[#190508] border border-[#ED101C]/45 flex items-center justify-center text-[#ED101C] shadow-[0_0_10px_rgba(237,16,28,0.16)] group-hover:bg-[#ED101C] group-hover:text-white transition-all shrink-0">
                             <NavIcon className="w-3.5 h-3.5" />
                           </span>
-                          <span className="group-hover:translate-x-0.5 transition-transform">
+                          <span className="truncate font-medium group-hover:translate-x-0.5 transition-transform">
                             {navItem.label}
                           </span>
                         </a>
@@ -964,16 +1040,16 @@ export default function JourneyAndCertification({
                     );
                   })}
                   {onOpenStudentPortal && (
-                    <li>
+                    <li className="col-span-2 lg:col-span-1 xl:col-span-2">
                       <button
                         type="button"
                         onClick={onOpenStudentPortal}
-                        className="group flex items-center gap-3 hover:text-white transition-colors text-left"
+                        className="group w-full flex items-center justify-center gap-2.5 p-2.5 rounded-xl bg-[#170609]/85 border border-[#ED101C]/50 hover:border-[#ED101C] hover:bg-[#ED101C]/15 text-white transition-all"
                       >
-                        <span className="w-7 h-7 rounded-lg bg-[#190508] border border-[#ED101C]/45 flex items-center justify-center text-[#ED101C] shadow-[0_0_12px_rgba(237,16,28,0.16)] group-hover:bg-[#ED101C] group-hover:text-white group-hover:shadow-[0_0_16px_rgba(237,16,28,0.6)] transition-all shrink-0">
+                        <span className="w-6 h-6 rounded-lg bg-[#190508] border border-[#ED101C]/55 flex items-center justify-center text-[#ED101C] shadow-[0_0_12px_rgba(237,16,28,0.2)] group-hover:bg-[#ED101C] group-hover:text-white transition-all shrink-0">
                           <GraduationCap className="w-3.5 h-3.5" />
                         </span>
-                        <span className="group-hover:translate-x-0.5 transition-transform font-semibold text-white">
+                        <span className="font-bold text-white group-hover:translate-x-0.5 transition-transform">
                           Área do Aluno (Portal LMS)
                         </span>
                       </button>
@@ -982,40 +1058,42 @@ export default function JourneyAndCertification({
                 </ul>
               </div>
 
-              {/* Coluna 3: CANAIS OFICIAIS com Caixas de Ícones Neon Vermelho */}
-              <div className="md:col-span-4 space-y-4 flex flex-col items-center md:items-start">
-                <h3 className="font-display font-extrabold text-sm uppercase tracking-wider text-white flex items-center justify-center md:justify-start gap-2.5">
+              {/* Coluna 3: CANAIS OFICIAIS (Cartões uniformes no Mobile, Tablet e Desktop) */}
+              <div className="lg:col-span-4 space-y-4 flex flex-col items-center lg:items-start w-full lg:pt-1">
+                <h3 className="font-display font-extrabold text-xs sm:text-sm uppercase tracking-wider text-white flex items-center justify-center lg:justify-start gap-2.5">
                   <span className="w-[3px] h-4 rounded-full bg-[#ED101C] shadow-[0_0_10px_#ED101C]" />
                   <span>Canais Oficiais</span>
                 </h3>
-                <div className="space-y-4 inline-flex flex-col items-start text-left">
+                <div className="w-full max-w-sm lg:max-w-none space-y-3 text-left">
                   <a
                     href={getWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-4 hover:text-white transition-colors"
+                    className="group w-full flex items-center gap-3.5 p-3.5 rounded-2xl bg-[#0C0D12] border border-white/10 hover:border-[#ED101C]/75 hover:bg-[#13070A] transition-all"
                   >
-                    <span className="w-11 h-11 rounded-xl bg-[#180508] border border-[#ED101C]/60 flex items-center justify-center text-[#ED101C] shadow-[0_0_18px_rgba(237,16,28,0.22)] group-hover:bg-[#ED101C] group-hover:text-white group-hover:shadow-[0_0_24px_rgba(237,16,28,0.65)] transition-all shrink-0">
-                      <Phone className="w-5 h-5" />
+                    <span className="w-10 h-10 rounded-xl bg-[#180508] border border-[#ED101C]/60 flex items-center justify-center text-[#ED101C] shadow-[0_0_16px_rgba(237,16,28,0.22)] group-hover:bg-[#ED101C] group-hover:text-white transition-all shrink-0">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                     </span>
-                    <div className="leading-snug">
-                      <span className="block text-xs text-white/75">WhatsApp Oficial:</span>
-                      <span className="block text-base sm:text-[17px] font-display font-extrabold text-white group-hover:text-[#FF3845] transition-colors">
+                    <div className="min-w-0 flex-1 leading-snug">
+                      <span className="block text-[11px] text-white/70">WhatsApp Oficial (Atendimento):</span>
+                      <span className="block text-sm sm:text-base font-display font-extrabold text-white group-hover:text-[#FF3845] transition-colors">
                         {BRAND_CONFIG.whatsappDisplay}
                       </span>
                     </div>
+                    <ArrowRight className="w-4 h-4 text-[#ED101C] shrink-0 group-hover:translate-x-0.5 transition-transform" />
                   </a>
 
-                  <div className="flex items-start gap-4">
-                    <span className="w-11 h-11 rounded-xl bg-[#180508] border border-[#ED101C]/60 flex items-center justify-center text-[#ED101C] shadow-[0_0_18px_rgba(237,16,28,0.22)] shrink-0 mt-0.5">
-                      <MapPin className="w-5 h-5" />
+                  <div className="w-full flex items-center gap-3.5 p-3.5 rounded-2xl bg-[#0C0D12] border border-white/10">
+                    <span className="w-10 h-10 rounded-xl bg-[#180508] border border-[#ED101C]/60 flex items-center justify-center text-[#ED101C] shadow-[0_0_16px_rgba(237,16,28,0.22)] shrink-0">
+                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                     </span>
-                    <div className="text-xs sm:text-[13.5px] text-white/80 leading-relaxed">
+                    <div className="min-w-0 text-xs sm:text-[13px] text-white/80 leading-snug">
                       <div>
                         Sede: <strong className="text-white font-extrabold">{BRAND_CONFIG.cityState}</strong>
                       </div>
-                      <div>Aulas presenciais (Socorrista):</div>
-                      <div className="text-white/90 font-medium">Prédio da Unicesumar</div>
+                      <div className="text-white/90 font-medium mt-0.5">
+                        Unicesumar (Presencial) + Portal Online
+                      </div>
                     </div>
                   </div>
                 </div>

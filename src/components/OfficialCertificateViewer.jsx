@@ -399,10 +399,10 @@ export default function OfficialCertificateViewer({
           )}
         </div>
 
-        {/* Linha 2: Pílula Verde "Lei nº 9.394/96 (LDB) • 200h" (Centralizada no Mobile) */}
+        {/* Linha 2: Pílula na Paleta Oficial BLACK (Vermelho + Dourado, sem verde fora de contexto) */}
         <div className="flex justify-center sm:justify-start">
-          <span className="inline-flex items-center gap-2 text-xs font-mono font-semibold text-emerald-400 px-4 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span className="inline-flex items-center gap-2 text-xs font-mono font-semibold text-white/95 px-4 py-1.5 rounded-full bg-[#190609]/95 border border-[#ED101C]/55 shadow-[0_0_15px_rgba(237,16,28,0.18)]">
+            <CheckCircle2 className="w-4 h-4 text-[#ED101C]" />
             <span>Lei nº 9.394/96 (LDB) • 200h</span>
           </span>
         </div>

@@ -1,19 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   Shield,
+  Users,
+  ChevronDown,
+  ChevronUp,
   RotateCw,
   Maximize2,
   Quote,
   X,
   Phone,
-  Volume2,
-  VolumeX,
 } from 'lucide-react';
 import { BRAND_CONFIG, getWhatsAppUrl } from '../data/blackData';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const INSTRUCTOR_CARDS = [
   {
@@ -64,37 +62,41 @@ const INSTRUCTOR_CARDS = [
 ];
 
 export default function InstructorsShowcase() {
+  const [showInstructors, setShowInstructors] = useState(false);
   const [flippedMap, setFlippedMap] = useState({});
   const [tiltMap, setTiltMap] = useState({});
   const [inspectCard, setInspectCard] = useState(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const audioCtxRef = useRef(null);
   const sectionRef = useRef(null);
 
-  // Entrada escalonada suave dos 5 crachás ao rolar até a seção Equipe
+  // Entrada escalonada suave dos 5 crachás ao abrir o módulo de instrutores
   useEffect(() => {
-    if (!sectionRef.current) return;
+    if (!showInstructors || !sectionRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from('.equipe-card-reveal', {
-        y: 26,
+        y: 18,
         opacity: 0,
-        duration: 0.72,
-        stagger: 0.09,
+        duration: 0.45,
+        stagger: 0.07,
         ease: 'power3.out',
         clearProps: 'transform,opacity',
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 76%',
-          once: true,
-        },
       });
     }, sectionRef);
     return () => ctx.revert();
+  }, [showInstructors]);
+
+  // Libera o AudioContext ao desmontar para evitar vazamentos em recarregamentos
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
   }, []);
 
-  // Inclinação 3D física sutil (±6°) + brilho holográfico seguindo o cursor no cartão
+  // Inclinação 3D física sutil (±6°) apenas em dispositivos com mouse/hover real
   const handleCardMouseMove = (e, id, isFlipped) => {
-    if (isFlipped) return;
+    if (isFlipped || window.matchMedia?.('(hover: none)').matches) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
@@ -125,72 +127,80 @@ export default function InstructorsShowcase() {
    * seguido de um leve estalo magnético tático ("Snap/Lock") ao encaixar em 180º.
    */
   const playCardFlipSound = (isFlippingToBack = true, delaySec = 0) => {
-    if (!soundEnabled) return;
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      if (!audioCtxRef.current) {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
         audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
+
+      const scheduleSound = () => {
+        try {
+          if (ctx.state === 'closed') return;
+          const now = ctx.currentTime + delaySec;
+
+          // 1. Camada "Whoosh" (Sopro aerodinâmico do cartão cortando o ar)
+          const duration = 0.22;
+          const bufferSize = Math.floor(ctx.sampleRate * duration);
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+          }
+
+          const whiteNoise = ctx.createBufferSource();
+          whiteNoise.buffer = noiseBuffer;
+
+          const bandpass = ctx.createBiquadFilter();
+          bandpass.type = 'bandpass';
+          bandpass.Q.setValueAtTime(2.4, now);
+          const startFreq = isFlippingToBack ? 260 : 340;
+          const peakFreq = isFlippingToBack ? 1550 : 1250;
+          const endFreq = isFlippingToBack ? 420 : 280;
+          bandpass.frequency.setValueAtTime(startFreq, now);
+          bandpass.frequency.exponentialRampToValueAtTime(peakFreq, now + 0.09);
+          bandpass.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.001, now);
+          noiseGain.gain.linearRampToValueAtTime(0.28, now + 0.075);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+          whiteNoise.connect(bandpass);
+          bandpass.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+
+          whiteNoise.start(now);
+          whiteNoise.stop(now + duration);
+
+          // 2. Camada "Tactical Snap" (Toque mecânico grave + clique sutil no encaixe final do giro)
+          const snapTime = now + 0.14;
+          const osc = ctx.createOscillator();
+          const snapGain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(isFlippingToBack ? 190 : 155, snapTime);
+          osc.frequency.exponentialRampToValueAtTime(48, snapTime + 0.065);
+
+          snapGain.gain.setValueAtTime(0.001, snapTime);
+          snapGain.gain.linearRampToValueAtTime(0.22, snapTime + 0.008);
+          snapGain.gain.exponentialRampToValueAtTime(0.001, snapTime + 0.065);
+
+          osc.connect(snapGain);
+          snapGain.connect(ctx.destination);
+
+          osc.start(snapTime);
+          osc.stop(snapTime + 0.07);
+        } catch (err) {
+          // Ignora com segurança qualquer falha de áudio em navegadores restritos
+        }
+      };
+
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        ctx.resume().then(scheduleSound).catch(() => {});
+      } else {
+        scheduleSound();
       }
-
-      const now = ctx.currentTime + delaySec;
-
-      // 1. Camada "Whoosh" (Sopro aerodinâmico do cartão cortando o ar)
-      const duration = 0.22;
-      const bufferSize = Math.floor(ctx.sampleRate * duration);
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-
-      const bandpass = ctx.createBiquadFilter();
-      bandpass.type = 'bandpass';
-      bandpass.Q.setValueAtTime(2.4, now);
-      // Varredura de frequência simulando o giro de 180 graus
-      const startFreq = isFlippingToBack ? 260 : 340;
-      const peakFreq = isFlippingToBack ? 1550 : 1250;
-      const endFreq = isFlippingToBack ? 420 : 280;
-      bandpass.frequency.setValueAtTime(startFreq, now);
-      bandpass.frequency.exponentialRampToValueAtTime(peakFreq, now + 0.09);
-      bandpass.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
-
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.001, now);
-      noiseGain.gain.linearRampToValueAtTime(0.28, now + 0.075);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-      whiteNoise.connect(bandpass);
-      bandpass.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-
-      whiteNoise.start(now);
-      whiteNoise.stop(now + duration);
-
-      // 2. Camada "Tactical Snap" (Toque mecânico grave + clique sutil no encaixe final do giro)
-      const snapTime = now + 0.14;
-      const osc = ctx.createOscillator();
-      const snapGain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(isFlippingToBack ? 190 : 155, snapTime);
-      osc.frequency.exponentialRampToValueAtTime(48, snapTime + 0.065);
-
-      snapGain.gain.setValueAtTime(0.001, snapTime);
-      snapGain.gain.linearRampToValueAtTime(0.22, snapTime + 0.008);
-      snapGain.gain.exponentialRampToValueAtTime(0.001, snapTime + 0.065);
-
-      osc.connect(snapGain);
-      snapGain.connect(ctx.destination);
-
-      osc.start(snapTime);
-      osc.stop(snapTime + 0.07);
     } catch (e) {
       // Ignora caso o navegador bloqueie áudio antes de interação
     }
@@ -209,28 +219,11 @@ export default function InstructorsShowcase() {
     }));
   };
 
-  const allAreFlipped = INSTRUCTOR_CARDS.every((c) => flippedMap[c.id]);
-
-  const handleFlipAll = () => {
-    const nextState = !allAreFlipped;
-    setTiltMap({});
-    // Efeito cascata sonoro e visual (55ms entre cada um dos 5 cartões!)
-    INSTRUCTOR_CARDS.forEach((card, index) => {
-      playCardFlipSound(nextState, index * 0.055);
-      setTimeout(() => {
-        setFlippedMap((prev) => ({
-          ...prev,
-          [card.id]: nextState,
-        }));
-      }, index * 55);
-    });
-  };
-
   return (
     <section
       ref={sectionRef}
       id="equipe"
-      className="relative bg-[#050505] text-white py-20 sm:py-24 border-b border-white/10 overflow-hidden"
+      className="relative bg-[#050505] text-white py-14 sm:py-20 border-b border-white/10 overflow-hidden scroll-mt-28 sm:scroll-mt-32"
       aria-labelledby="titulo-equipe-instrutores"
     >
       {/* Feixes Diagonais Vermelhos Discretos nos Cantos (Coesão Visual com todo o site) */}
@@ -258,70 +251,71 @@ export default function InstructorsShowcase() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* ===================================================================
-            CABEÇALHO DA EQUIPE DE INSTRUTORES
+            CABEÇALHO ENXUTO + MÓDULO INTERATIVO PARA ABRIR OS INSTRUTORES
         =================================================================== */}
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ED101C]/15 border border-[#ED101C]/40 text-[#ED101C] text-xs font-extrabold uppercase tracking-widest mb-4">
+        <div className="text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#ED101C]/15 border border-[#ED101C]/40 text-[#ED101C] text-[11px] font-extrabold uppercase tracking-widest mb-3.5">
             <Shield className="w-3.5 h-3.5" />
-            <span>Credenciais Operacionais Interativas • Giro 3D com Áudio Tático</span>
+            <span>Equipe de Elite APH</span>
           </div>
 
           <h2
             id="titulo-equipe-instrutores"
             className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight"
           >
-            Conheça Nossa Equipe de <span className="text-[#ED101C]">Instrutores</span>
+            Conheça Nossa{' '}
+            <span className="bg-gradient-to-r from-white via-[#FF5E68] to-[#ED101C] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(237,16,28,0.35)]">
+              Equipe de Instrutores
+            </span>
           </h2>
 
-          <p className="mt-4 text-[#B8B8B8] text-base sm:text-lg leading-relaxed">
-            Toque ou clique em qualquer cartão para <strong className="text-white">girar a credencial em 3D</strong> e
-            conferir a formação acadêmica, experiência real em campo, cursos e áreas de atuação de cada especialista.
+          <p className="mt-3 text-[#B8B8B8] text-sm sm:text-base leading-relaxed">
+            Treinamento conduzido por <strong className="text-white">5 especialistas</strong> com vivência real em
+            resgate, SAMU e combate a incêndio.
           </p>
 
-          {/* Barra de Ação Global: Virar Todos em Cascata + Controle de Som */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          {/* Módulo Compacto Clicável: Abre/Recolhe os Cartões dos Instrutores */}
+          <div className="mt-6 flex justify-center">
             <button
               type="button"
-              onClick={handleFlipAll}
-              className="btn-magnetic px-6 py-3 rounded-full bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs sm:text-sm shadow-red-glow-sm inline-flex items-center gap-2.5"
-            >
-              <RotateCw className={`w-4 h-4 transition-transform duration-500 ${allAreFlipped ? 'rotate-180' : ''}`} />
-              <span>
-                {allAreFlipped
-                  ? 'Virar Todos para a Capa (Frente)'
-                  : 'Girar Todos os 5 Cartões (Ver Todos os Currículos)'}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`px-4 py-3 rounded-full text-xs font-bold border inline-flex items-center gap-2 transition-colors ${
-                soundEnabled
-                  ? 'bg-[#14141A] border-white/15 text-white hover:border-[#ED101C]'
-                  : 'bg-[#111115] border-white/10 text-white/50 hover:text-white'
+              onClick={() => setShowInstructors((prev) => !prev)}
+              aria-expanded={showInstructors}
+              className={`btn-magnetic group w-full sm:w-auto sm:min-w-[320px] px-6 py-4 rounded-2xl border transition-all duration-300 inline-flex items-center justify-center gap-3 font-extrabold text-sm sm:text-base ${
+                showInstructors
+                  ? 'bg-[#14141A] border-white/20 text-white hover:border-[#ED101C]/60'
+                  : 'cta-btn-shimmer bg-[#ED101C] hover:bg-[#C80B15] border-[#ED101C] text-white shadow-[0_10px_30px_rgba(237,16,28,0.42)]'
               }`}
-              title={soundEnabled ? 'Desativar som ao girar cartão' : 'Ativar som ao girar cartão'}
             >
-              {soundEnabled ? (
-                <>
-                  <Volume2 className="w-4 h-4 text-[#ED101C]" />
-                  <span>Som 3D Ativo</span>
-                </>
+              <Users className="w-5 h-5 shrink-0" />
+              <span>
+                {showInstructors
+                  ? 'Ocultar Instrutores'
+                  : 'Ver Nossos Instrutores'}
+              </span>
+              {showInstructors ? (
+                <ChevronUp className="w-4 h-4 shrink-0 text-white/80" />
               ) : (
-                <>
-                  <VolumeX className="w-4 h-4" />
-                  <span>Som Silenciado</span>
-                </>
+                <ChevronDown className="w-4 h-4 shrink-0 group-hover:translate-y-0.5 transition-transform" />
               )}
             </button>
           </div>
         </div>
 
         {/* ===================================================================
-            GRADE ESPECIAL 3D FLIP CARDS DOS 5 INSTRUTORES
+            ÁREA EXPANDIDA: INSTRUÇÃO CLARA + GRADE 3D FLIP CARDS DOS 5 INSTRUTORES
         =================================================================== */}
-        <div className="mt-14 flex flex-wrap justify-center gap-7 lg:gap-9">
+        {showInstructors && (
+          <div className="mt-8 sm:mt-10">
+            {/* Comunicação objetiva de como virar o cartão para ver habilidades e currículo */}
+            <div className="max-w-xl mx-auto mb-8 px-4 py-3 rounded-2xl bg-[#110608]/95 border border-[#ED101C]/40 text-center">
+              <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
+                <strong className="text-[#FF6B73]">Toque ou clique em qualquer cartão</strong> para girar em 3D e
+                conferir habilidades, cursos e experiência. Use <strong className="text-white">Ampliar</strong> para
+                leitura em tela cheia.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-7 lg:gap-9">
           {INSTRUCTOR_CARDS.map((inst, idx) => {
             const isFlipped = !!flippedMap[inst.id];
             const tilt = tiltMap[inst.id] || {
@@ -460,12 +454,25 @@ export default function InstructorsShowcase() {
               </div>
             );
           })}
-        </div>
+            </div>
+
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowInstructors(false)}
+                className="px-5 py-2.5 rounded-full bg-[#14141A] border border-white/15 hover:border-[#ED101C]/60 text-xs font-bold text-white/85 hover:text-white inline-flex items-center gap-2 transition-colors"
+              >
+                <ChevronUp className="w-4 h-4 text-[#ED101C]" />
+                <span>Recolher Lista de Instrutores</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ===================================================================
             MANIFESTO DE LIDERANÇA DO FUNDADOR (CLEVERSON BLACK)
         =================================================================== */}
-        <div className="mt-14 sm:mt-16 relative overflow-hidden bg-gradient-to-r from-[#140507] via-[#0E0E13] to-[#120608] border border-[#ED101C]/55 rounded-3xl p-6 sm:p-9 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_18px_50px_rgba(0,0,0,0.85),inset_0_0_24px_rgba(237,16,28,0.1)] text-center lg:text-left">
+        <div className="mt-10 sm:mt-14 relative overflow-hidden bg-gradient-to-r from-[#140507] via-[#0E0E13] to-[#120608] border border-[#ED101C]/55 rounded-3xl p-6 sm:p-9 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_18px_50px_rgba(0,0,0,0.85),inset_0_0_24px_rgba(237,16,28,0.1)] text-center lg:text-left">
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 max-w-3xl">
             <div className="w-12 h-12 rounded-2xl bg-[#1A0609] border border-[#ED101C]/55 shadow-[0_0_18px_rgba(237,16,28,0.22)] flex items-center justify-center shrink-0 text-[#ED101C] lg:mt-0.5">
               <Quote className="w-6 h-6" />

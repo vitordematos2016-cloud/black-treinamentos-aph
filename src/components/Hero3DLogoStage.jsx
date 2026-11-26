@@ -285,8 +285,18 @@ export default function Hero3DLogoStage() {
         }
       `}</style>
 
-      {/* Palco 3D Limpo (Sem botões embaixo, clique ou arraste direto na Logo 3D) */}
+      {/* Palco 3D Limpo integrado ao fundo escuro com brilho atmosférico e reflexo de piso */}
       <div className="relative w-full max-w-[700px] aspect-[16/10] flex items-center justify-center overflow-visible">
+        {/* Aura radial suave integrando a Logo 3D ao cenário escuro */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(ellipse_62%_52%_at_50%_50%,rgba(237,16,28,0.22),rgba(237,16,28,0.05)_48%,transparent_75%)]"
+          aria-hidden="true"
+        />
+        {/* Reflexo sutil no chão abaixo da Logo 3D */}
+        <div
+          className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 w-[68%] h-[2px] bg-gradient-to-r from-transparent via-[#ED101C]/55 to-transparent blur-[1px]"
+          aria-hidden="true"
+        />
         {/* 1. Vídeo de Raios (`ref-raios.mp4`) ativo apenas no efeito completo ao recarregar a página */}
         <video
           ref={videoRef}
@@ -321,7 +331,7 @@ export default function Hero3DLogoStage() {
           role="button"
           tabIndex={0}
           aria-label="Logo 3D interativa BLACK Treinamentos. Toque para disparar raios."
-          className={`relative z-10 w-[96%] h-[92%] flex items-center justify-center touch-pan-y ${
+          className={`relative z-10 w-[96%] h-[92%] flex items-center justify-center touch-pan-y outline-none focus:outline-none focus-visible:outline-none ${
             phase === 'climbing'
               ? 'anim-climb-spin-clean cursor-wait'
               : phase === 'lightning'
