@@ -112,6 +112,8 @@ export default function PaymentReceiptModal({
   const parcelaLabel = `Parcela ${String(parcela.numero).padStart(2, '0')}/10`;
   const metodoLabel = parcela.metodo || 'PIX';
   const valorLabel = parcela.valor || 'R$ 200,00';
+  const recebidoPorLabel = parcela.recebidoPor || 'Secretaria BLACK Treinamentos';
+  const observacaoLabel = parcela.observacaoPagamento || '';
 
   const handlePrintReceiptPdf = () => {
     const existing = document.getElementById('black-payment-receipt-frame');
@@ -134,6 +136,8 @@ export default function PaymentReceiptModal({
     const safePaidDate = escapeHtml(paidDate);
     const safeMetodoLabel = escapeHtml(metodoLabel);
     const safeValorLabel = escapeHtml(valorLabel);
+    const safeRecebidoPor = escapeHtml(recebidoPorLabel);
+    const safeObs = escapeHtml(observacaoLabel);
     const safeCorpName = escapeHtml(BRAND_CONFIG.corporateName);
     const safeCnpj = escapeHtml(BRAND_CONFIG.cnpj);
 
@@ -239,8 +243,10 @@ export default function PaymentReceiptModal({
       <div class="row"><span class="muted">Código do Pagamento</span><span class="val-mono">${safeCode}</span></div>
       <div class="row"><span class="muted">Aluno</span><span class="val">${safeStudentName}</span></div>
       <div class="row"><span class="muted">CPF</span><span class="val-mono">${safeStudentCpf}</span></div>
-      <div class="row"><span class="muted">Data do Pagamento</span><span class="val">${safePaidDate}</span></div>
+      <div class="row"><span class="muted">Data e Horário</span><span class="val">${safePaidDate}</span></div>
       <div class="row"><span class="muted">Forma de Pagamento</span><span class="val">${safeMetodoLabel}</span></div>
+      <div class="row"><span class="muted">Recebido por</span><span class="val">${safeRecebidoPor}</span></div>
+      ${safeObs ? `<div class="row"><span class="muted">Observação</span><span class="val">${safeObs}</span></div>` : ''}
       <div class="row"><span class="muted">Valor Pago</span><span class="val-money">${safeValorLabel}</span></div>
     </div>
 
@@ -378,7 +384,7 @@ export default function PaymentReceiptModal({
           <div className="py-2 flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-2 text-white/70 shrink-0">
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF4D58] shrink-0 drop-shadow-[0_0_6px_rgba(237,16,28,0.8)]" />
-              <span>Data</span>
+              <span>Data e Horário</span>
             </span>
             <strong className="text-white text-right shrink-0">{paidDate}</strong>
           </div>
@@ -386,10 +392,32 @@ export default function PaymentReceiptModal({
           <div className="py-2 flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-2 text-white/70 shrink-0">
               <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF4D58] shrink-0 drop-shadow-[0_0_6px_rgba(237,16,28,0.8)]" />
-              <span>Pagamento</span>
+              <span>Como foi Pago</span>
             </span>
             <strong className="text-white text-right shrink-0">{metodoLabel}</strong>
           </div>
+
+          <div className="py-2 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 text-white/70 shrink-0">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF4D58] shrink-0 drop-shadow-[0_0_6px_rgba(237,16,28,0.8)]" />
+              <span>Recebido por</span>
+            </span>
+            <strong className="text-white text-right truncate max-w-[180px]" title={recebidoPorLabel}>
+              {recebidoPorLabel}
+            </strong>
+          </div>
+
+          {observacaoLabel && (
+            <div className="py-2 flex items-start justify-between gap-3">
+              <span className="inline-flex items-center gap-2 text-white/70 shrink-0">
+                <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF4D58] shrink-0 drop-shadow-[0_0_6px_rgba(237,16,28,0.8)]" />
+                <span>Observação</span>
+              </span>
+              <span className="text-white/85 text-right text-[11px] sm:text-xs leading-snug max-w-[205px]">
+                {observacaoLabel}
+              </span>
+            </div>
+          )}
 
           <div className="pt-2.5 pb-1 flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-2 text-white/85 font-semibold shrink-0">

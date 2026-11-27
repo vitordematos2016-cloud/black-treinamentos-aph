@@ -351,17 +351,23 @@ export function saveAbsenceJustifications(list) {
 /* ============================================================================
    5. FINANCEIRO & BOLETOS 10X (ADMIN ANEXA/REMOVE → ALUNO VISUALIZA/BAIXA)
 ============================================================================ */
-export function loadStudentInstallments() {
+export function loadStudentInstallments(studentId = 'demo-student-001') {
+  const sid = studentId || 'demo-student-001';
+  const storageKey =
+    sid === 'demo-student-001'
+      ? STORAGE_KEYS.INSTALLMENTS
+      : `${STORAGE_KEYS.INSTALLMENTS}_${sid}`;
+
   const OVERDUE_DEMO_FLAG = 'black_aph_overdue_slice_v2';
   const PRICE_200_MIGRATION_FLAG = 'black_aph_installments_200_v1';
-  const parsed = safeRead(STORAGE_KEYS.INSTALLMENTS, null);
+  const parsed = safeRead(storageKey, null);
   if (Array.isArray(parsed) && parsed.length > 0) {
     let working = parsed;
     let changed = false;
 
     try {
       // Migração oficial de mensalidade para R$ 200,00 (10x = R$ 2.000,00 total)
-      if (!localStorage.getItem(PRICE_200_MIGRATION_FLAG)) {
+      if (sid === 'demo-student-001' && !localStorage.getItem(PRICE_200_MIGRATION_FLAG)) {
         localStorage.setItem(PRICE_200_MIGRATION_FLAG, '1');
         working = working.map((p) =>
           p.valor === 'R$ 180,00' || p.valorCentavos === 18000 || !p.valorCentavos
@@ -371,11 +377,10 @@ export function loadStudentInstallments() {
         changed = true;
       }
 
-      // Migração única para corrigir status irreais de parcelas futuras de 2027 (evitar "Em atraso" em datas que vencem no futuro)
-      if (!localStorage.getItem(OVERDUE_DEMO_FLAG)) {
+      if (sid === 'demo-student-001' && !localStorage.getItem(OVERDUE_DEMO_FLAG)) {
         localStorage.setItem(OVERDUE_DEMO_FLAG, '1');
       }
-      if (!localStorage.getItem('black_aph_fix_future_status_v1')) {
+      if (sid === 'demo-student-001' && !localStorage.getItem('black_aph_fix_future_status_v1')) {
         localStorage.setItem('black_aph_fix_future_status_v1', '1');
         working = working.map((p) => {
           if (p.status === 'atrasada' && typeof p.vencimento === 'string') {
@@ -392,35 +397,92 @@ export function loadStudentInstallments() {
       }
 
       if (changed) {
-        safeWrite(STORAGE_KEYS.INSTALLMENTS, working);
+        safeWrite(storageKey, working);
       }
     } catch {
       // ignora
     }
     return working;
   }
-  const seeded = PARCELAS_FINANCEIRO_DEMO.map((p) => ({
-    ...p,
-    valor: 'R$ 200,00',
-    valorCentavos: 20000,
-    boletoFileId: '',
-    boletoNome: '',
-    boletoTamanho: '',
-    boletoTipo: '',
-    boletoDataUrl: '',
-  }));
+
+  const allStudents = loadAdminStudents();
+  const targetStudent = allStudents.find((s) => s.id === sid);
+  const paidCount =
+    typeof targetStudent?.parcelasPagas === 'number' ? targetStudent.parcelasPagas : 4;
+  const hasPendingOverdue = targetStudent?.statusFinanceiro === 'Pendente';
+
+  const seeded = PARCELAS_FINANCEIRO_DEMO.map((p, idx) => {
+    let status = p.status;
+    let metodo = p.metodo;
+    let pagoEm = p.status === 'paga' ? `${p.vencimento} às 14:20` : '';
+    if (sid !== 'demo-student-001') {
+      if (idx < paidCount) {
+        status = 'paga';
+        metodo = idx % 3 === 1 ? 'Cartão de Crédito' : idx % 3 === 2 ? 'Dinheiro' : 'PIX';
+        pagoEm = `${p.vencimento} às 14:20`;
+      } else if (idx === paidCount) {
+        status = hasPendingOverdue ? 'atrasada' : 'aberta';
+        metodo = 'Boleto / PIX';
+        pagoEm = '';
+      } else {
+        status = 'futura';
+        metodo = 'Boleto / PIX';
+        pagoEm = '';
+      }
+    }
+    return {
+      ...p,
+      status,
+      metodo,
+      pagoEm,
+      valor: 'R$ 200,00',
+      valorCentavos: 20000,
+      boletoFileId: '',
+      boletoNome: '',
+      boletoTamanho: '',
+      boletoTipo: '',
+      boletoDataUrl: '',
+    };
+  });
   try {
-    localStorage.setItem(OVERDUE_DEMO_FLAG, '1');
-    localStorage.setItem(PRICE_200_MIGRATION_FLAG, '1');
-    localStorage.setItem('black_aph_fix_future_status_v1', '1');
+    if (sid === 'demo-student-001') {
+      localStorage.setItem(OVERDUE_DEMO_FLAG, '1');
+      localStorage.setItem(PRICE_200_MIGRATION_FLAG, '1');
+      localStorage.setItem('black_aph_fix_future_status_v1', '1');
+    }
   } catch {
     // ignora
   }
   return seeded;
 }
 
-export function saveStudentInstallments(list) {
-  safeWrite(STORAGE_KEYS.INSTALLMENTS, list);
+export function saveStudentInstallments(list, studentId = 'demo-student-001') {
+  const sid = studentId || 'demo-student-001';
+  const storageKey =
+    sid === 'demo-student-001'
+      ? STORAGE_KEYS.INSTALLMENTS
+      : `${STORAGE_KEYS.INSTALLMENTS}_${sid}`;
+  safeWrite(storageKey, list);
+
+  if (Array.isArray(list)) {
+    const paidCount = list.filter((p) => p.status === 'paga').length;
+    const hasOverdue = list.some((p) => p.status === 'atrasada');
+    const students = loadAdminStudents();
+    let studentChanged = false;
+    const updatedStudents = students.map((s) => {
+      if (s.id !== sid) return s;
+      studentChanged = true;
+      return {
+        ...s,
+        parcelasPagas: paidCount,
+        parcelasTotal: list.length || 10,
+        statusFinanceiro: hasOverdue ? 'Pendente' : 'Em dia',
+      };
+    });
+    if (studentChanged) {
+      saveAdminStudents(updatedStudents);
+    }
+  }
 }
 
 /* ============================================================================
@@ -677,6 +739,25 @@ export function saveAdminProfile(profile) {
 /* ============================================================================
    8. AUTENTICAÇÃO DO ALUNO (PRONTA PARA PLUGAR NO SUPABASE AUTH)
 ============================================================================ */
+export function formatCpfInput(rawValue = '') {
+  const digits = String(rawValue || '').replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+}
+
+export function formatPhoneInput(rawValue = '') {
+  const digits = String(rawValue || '').replace(/\D/g, '').slice(0, 11);
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
 export function validateStrongPassword(password = '') {
   const cleaned = String(password || '').trim();
   const minLength = cleaned.length >= 6;

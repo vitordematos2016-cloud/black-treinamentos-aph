@@ -11,6 +11,7 @@ import CoursesSection from './components/CoursesSection';
 import InstructorsShowcase from './components/InstructorsShowcase';
 import JourneyAndCertification from './components/JourneyAndCertification';
 import { BRAND_CONFIG, getWhatsAppUrl } from './data/blackData';
+import { formatPhoneInput } from './services/lmsContentService';
 import {
   initNavigationHistory,
   pushOverlayHistory,
@@ -167,16 +168,16 @@ export default function App() {
               />
             </main>
 
-            {/* Botão Flutuante de WhatsApp Oficial */}
+            {/* Botão Flutuante de WhatsApp Oficial (somente símbolo vermelho discreto) */}
             <a
               href={getWhatsAppUrl()}
               target="_blank"
               rel="noopener noreferrer"
+              title={`Falar no WhatsApp Oficial • ${BRAND_CONFIG.whatsappDisplay}`}
               aria-label="Falar pelo WhatsApp Oficial da BLACK Treinamentos"
-              className="fixed bottom-4 sm:bottom-5 right-4 sm:right-5 z-40 btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white font-bold text-xs sm:text-sm p-3.5 sm:px-4 sm:py-3 rounded-full shadow-red-glow flex items-center gap-2 border border-white/20"
+              className="fixed bottom-4 sm:bottom-5 right-4 sm:right-5 z-40 btn-magnetic bg-[#ED101C] hover:bg-[#C80B15] text-white w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-full shadow-red-glow flex items-center justify-center border border-white/20"
             >
-              <Phone className="w-4 h-4" />
-              <span className="hidden sm:inline">WhatsApp {BRAND_CONFIG.whatsappDisplay}</span>
+              <Phone className="w-5 h-5" />
             </a>
           </>
         )}
@@ -258,9 +259,11 @@ export default function App() {
                   <input
                     id="campo-whats"
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={15}
                     required
                     value={formTelefone}
-                    onChange={(e) => setFormTelefone(e.target.value)}
+                    onChange={(e) => setFormTelefone(formatPhoneInput(e.target.value))}
                     placeholder="(45) 99999-9999"
                     className="w-full bg-[#08080B] border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#ED101C]"
                   />

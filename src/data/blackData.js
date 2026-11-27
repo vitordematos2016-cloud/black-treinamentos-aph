@@ -50,6 +50,19 @@ export const getWhatsAppUrl = (customMessage) => {
   return `https://wa.me/${BRAND_CONFIG.whatsappNumber}?text=${text}`;
 };
 
+export const getStudentWhatsAppUrl = (phone, customMessage) => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  const fullNumber = digits
+    ? digits.startsWith('55') && digits.length >= 12
+      ? digits
+      : `55${digits}`
+    : BRAND_CONFIG.whatsappNumber;
+  const text = encodeURIComponent(
+    customMessage || 'Olá! Aqui é a Coordenação da BLACK Treinamentos (Curso APH 200h).'
+  );
+  return `https://wa.me/${fullNumber}?text=${text}`;
+};
+
 // CONTEÚDO PROGRAMÁTICO OFICIAL DO VERSO DO CERTIFICADO (11 MÓDULOS = 200 HORAS)
 export const CONTEUDO_PROGRAMATICO_200H = [
   { modulo: '01', titulo: 'Introdução ao APH e Legislação', cargaHoraria: '10h', horas: 10 },

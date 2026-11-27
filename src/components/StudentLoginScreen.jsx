@@ -19,6 +19,7 @@ import {
   saveCustomStudentPassword,
   updateStudentProfileContact,
   validateStrongPassword,
+  formatCpfInput,
 } from '../services/lmsContentService';
 
 export default function StudentLoginScreen({ onLoginSuccess, onBackToLanding }) {
@@ -228,7 +229,10 @@ export default function StudentLoginScreen({ onLoginSuccess, onBackToLanding }) 
                     id="login-identifier"
                     type="text"
                     value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setIdentifier(/^[\d.\-]+$/.test(val) ? formatCpfInput(val) : val);
+                    }}
                     placeholder="000.000.000-00 ou seu@email.com"
                     className="w-full bg-[#06070A] border border-white/15 focus:border-[#ED101C] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/35 focus:outline-none transition-colors"
                   />

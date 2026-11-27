@@ -82,6 +82,7 @@ import {
   buildLessonStudentColorMap,
   getLessonParticipantColor,
   loadChatNotifications,
+  saveChatNotifications,
   pushChatNotification,
   loadReadChatNotifIds,
   saveReadChatNotifIds,
@@ -101,6 +102,7 @@ import {
   changeStudentPassword,
   updateStudentProfileContact,
   validateStrongPassword,
+  formatPhoneInput,
   logoutStudent,
 } from '../services/lmsContentService';
 import {
@@ -221,7 +223,9 @@ export default function StudentPortalLMS({ onBackToLanding }) {
   const [previewAttachment, setPreviewAttachment] = useState(null);
 
   // Financeiro (Parcelas + Boletos enviados pelo Admin + Foco na Parcela Atual + Comprovante Oficial)
-  const [installments, setInstallments] = useState(() => loadStudentInstallments());
+  const [installments, setInstallments] = useState(() =>
+    loadStudentInstallments(loadStudentSession()?.id || 'demo-student-001')
+  );
   const [advanceParcela, setAdvanceParcela] = useState(null);
   const [showAllInstallments, setShowAllInstallments] = useState(false);
   const [receiptModalParcela, setReceiptModalParcela] = useState(null);
@@ -301,13 +305,14 @@ export default function StudentPortalLMS({ onBackToLanding }) {
   // Sincroniza tudo com o Painel Admin (boletos, aulas 200h, comunicados, atestados, chat e certificado!)
   useEffect(() => {
     const syncFromAdmin = () => {
-      setInstallments(loadStudentInstallments());
+      const latestSession = loadStudentSession();
+      const targetStudentId = latestSession?.id || session?.id || 'demo-student-001';
+      setInstallments(loadStudentInstallments(targetStudentId));
       setModulos(loadCourseModules200h());
       setAnnouncements(loadAnnouncements());
       setJustifications(loadAbsenceJustifications());
       setLessonComments(loadLessonComments());
       setChatNotifications(loadChatNotifications());
-      const latestSession = loadStudentSession();
       if (latestSession?.id) {
         setReadChatNotifIds(loadReadChatNotifIds(latestSession.id));
         setCertRequest(getStudentCertificateRequest(latestSession.id));
@@ -748,10 +753,13 @@ export default function StudentPortalLMS({ onBackToLanding }) {
         minute: '2-digit',
       }),
     };
-    setLessonComments((prev) => ({
-      ...prev,
-      [activeAula.id]: [...(prev[activeAula.id] || []), newEntry],
-    }));
+    const latestComments = loadLessonComments();
+    const nextCommentsMap = {
+      ...latestComments,
+      [activeAula.id]: [...(latestComments[activeAula.id] || []), newEntry],
+    };
+    setLessonComments(nextCommentsMap);
+    saveLessonComments(nextCommentsMap);
 
     // Gera notificação no canal separado de Conversa/Dúvidas (para professor e demais alunos)
     const chatNotif = {
@@ -795,10 +803,19 @@ export default function StudentPortalLMS({ onBackToLanding }) {
   };
 
   const handleDeleteOwnComment = (lessonId, commentId) => {
-    setLessonComments((prev) => ({
-      ...prev,
-      [lessonId]: (prev[lessonId] || []).filter((c) => c.id !== commentId),
-    }));
+    const latestComments = loadLessonComments();
+    const nextCommentsMap = {
+      ...latestComments,
+      [lessonId]: (latestComments[lessonId] || []).filter((c) => c.id !== commentId),
+    };
+    setLessonComments(nextCommentsMap);
+    saveLessonComments(nextCommentsMap);
+
+    const remainingNotifs = loadChatNotifications().filter(
+      (n) => n.commentId !== commentId && n.id !== `chatnotif-${commentId}`
+    );
+    setChatNotifications(remainingNotifs);
+    saveChatNotifications(remainingNotifs);
   };
 
   const handleOpenNotice = (noticeId) => {
@@ -4438,9 +4455,12 @@ export default function StudentPortalLMS({ onBackToLanding }) {
                     return (
                       <div
                         key={p.numero}
+                        onClick={() => {
+                          if (p.status === 'paga') setReceiptModalParcela(p);
+                        }}
                         className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
                           p.status === 'paga'
-                            ? 'bg-[#10141A] border-emerald-500/25'
+                            ? 'bg-[#10141A] border-emerald-500/25 hover:border-emerald-400/50 cursor-pointer'
                             : isFocus
                             ? 'bg-[#17121A] border-[#ED101C]/65'
                             : 'bg-[#13151E] border-white/10 hover:border-white/20'
@@ -4487,12 +4507,17 @@ export default function StudentPortalLMS({ onBackToLanding }) {
                               )}
                             </div>
                             <span className="text-xs text-white/55 block mt-0.5">
-                              {due.monthName}/{due.year} • Vencimento: {p.vencimento} • {p.metodo}
+                              {p.status === 'paga'
+                                ? `Pago via ${p.metodo || 'PIX'} • ${p.pagoEm || `${p.vencimento} às 08:42`} • Toque para detalhes`
+                                : `${due.monthName}/${due.year} • Vencimento: ${p.vencimento} • ${p.metodo}`}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <div
+                          className="flex flex-wrap items-center gap-2 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {hasBoleto && (
                             <button
                               type="button"
@@ -5390,9 +5415,12 @@ export default function StudentPortalLMS({ onBackToLanding }) {
                     </label>
                     <input
                       type="tel"
+                      inputMode="numeric"
+                      maxLength={15}
+                      placeholder="(45) 99999-9999"
                       value={session.telefone}
-                      onChange={(e) => updateProfileField('telefone', e.target.value)}
-                      className="w-full bg-[#090A0E] border border-white/15 focus:border-[#ED101C] focus:ring-1 focus:ring-[#ED101C]/35 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                      onChange={(e) => updateProfileField('telefone', formatPhoneInput(e.target.value))}
+                      className="w-full bg-[#090A0E] border border-white/15 focus:border-[#ED101C] focus:ring-1 focus:ring-[#ED101C]/35 rounded-xl px-4 py-3 text-sm font-mono text-white focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
