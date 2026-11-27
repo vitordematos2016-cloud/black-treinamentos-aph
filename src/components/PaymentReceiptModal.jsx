@@ -111,7 +111,7 @@ export default function PaymentReceiptModal({
   const paidDate = parcela.pagoEm || `${parcela.vencimento} às 08:42`;
   const parcelaLabel = `Parcela ${String(parcela.numero).padStart(2, '0')}/10`;
   const metodoLabel = parcela.metodo || 'PIX';
-  const valorLabel = parcela.valor || 'R$ 180,00';
+  const valorLabel = parcela.valor || 'R$ 200,00';
 
   const handlePrintReceiptPdf = () => {
     const existing = document.getElementById('black-payment-receipt-frame');

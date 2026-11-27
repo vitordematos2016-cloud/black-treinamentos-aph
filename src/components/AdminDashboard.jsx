@@ -39,6 +39,9 @@ import {
   CheckCheck,
   Zap,
   Filter,
+  Lock,
+  Unlock,
+  MessageSquare,
 } from 'lucide-react';
 import { BRAND_CONFIG, EQUIPE_INSTRUTORES, getWhatsAppUrl } from '../data/blackData';
 import OfficialCertificateViewer from './OfficialCertificateViewer';
@@ -71,6 +74,14 @@ import {
   saveAdminProfile,
   loadStudentSession,
   saveStudentSession,
+  loadLessonComments,
+  saveLessonComments,
+  buildLessonStudentColorMap,
+  getLessonParticipantColor,
+  loadChatNotifications,
+  pushChatNotification,
+  loadReadChatNotifIds,
+  saveReadChatNotifIds,
 } from '../services/lmsContentService';
 import {
   saveFileToVault,
@@ -214,6 +225,13 @@ export default function AdminDashboard() {
     tipo: 'APOSTILA PDF',
     arquivoUrl: '',
   });
+  const [lessonComments, setLessonComments] = useState(() => loadLessonComments());
+  const [chatNotifications, setChatNotifications] = useState(() => loadChatNotifications());
+  const [readAdminChatIds, setReadAdminChatIds] = useState(() =>
+    loadReadChatNotifIds('admin-cleve')
+  );
+  const [adminReplyDrafts, setAdminReplyDrafts] = useState({});
+  const [adminReplyTargets, setAdminReplyTargets] = useState({}); // { [aulaId]: { parentId, authorName } | null }
 
   // Chamada Presencial
   const [selectedSaturday, setSelectedSaturday] = useState('2027-03-13');
@@ -261,6 +279,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     const syncAll = () => {
       setJustifications(loadAbsenceJustifications());
+      setLessonComments(loadLessonComments());
+      setChatNotifications(loadChatNotifications());
+      setReadAdminChatIds(loadReadChatNotifIds('admin-cleve'));
       setCertRequests(loadCertificateRequests());
       setInstallments(loadStudentInstallments());
       setAnnouncements(loadAnnouncements());
@@ -388,6 +409,91 @@ export default function AdminDashboard() {
 
   // Conteúdo 200h (11 Módulos)
   const activeMod = modules200h[selectedModIdx] || modules200h[0];
+
+  const handleToggleModuleRelease = (moduloCode) => {
+    let becameUnlocked = false;
+    const next = modules200h.map((m) => {
+      if (m.modulo !== moduloCode) return m;
+      becameUnlocked = !m.liberadoProfessor;
+      return { ...m, liberadoProfessor: becameUnlocked };
+    });
+    setModules200h(next);
+    saveCourseModules200h(next);
+    showToast(
+      becameUnlocked
+        ? `Módulo ${moduloCode} LIBERADO para os alunos no Portal ✓`
+        : `Módulo ${moduloCode} BLOQUEADO novamente para os alunos.`
+    );
+  };
+
+  const handleProfessorReplyComment = (aula, e) => {
+    e.preventDefault();
+    const text = (adminReplyDrafts[aula.id] || '').trim();
+    if (!text) return;
+    const target = adminReplyTargets[aula.id] || null;
+    const rawProf = (adminProfile?.nome || '').trim();
+    const profName =
+      !rawProf || rawProf.toLowerCase().includes('cleverson') ? 'Cleverson Black' : rawProf;
+
+    const replyEntry = {
+      id: `cmt-prof-${Date.now()}`,
+      ...(target
+        ? {
+            parentId: target.parentId,
+            replyToName: target.authorName,
+            replyToSnippet: target.snippet,
+          }
+        : {}),
+      lessonId: aula.id,
+      moduloNumero: activeMod.modulo,
+      aulaTitulo: aula.titulo,
+      authorName: profName,
+      authorRole: 'professor',
+      text,
+      createdAt: new Date().toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+    const next = {
+      ...lessonComments,
+      [aula.id]: [...(lessonComments[aula.id] || []), replyEntry],
+    };
+    setLessonComments(next);
+    saveLessonComments(next);
+
+    // Envia notificação separada de Conversa/Dúvida para os alunos (destacando Professor!)
+    const profNotif = {
+      id: `chatnotif-${replyEntry.id}`,
+      commentId: replyEntry.id,
+      lessonId: aula.id,
+      moduloNumero: activeMod.modulo,
+      aulaTitulo: aula.titulo,
+      authorName: profName,
+      authorRole: 'professor',
+      replyToName: target?.authorName || null,
+      replyToSnippet: target?.snippet || null,
+      text,
+      createdAt: replyEntry.createdAt,
+      timestamp: Date.now(),
+    };
+    const nextNotifs = pushChatNotification(profNotif);
+    setChatNotifications(nextNotifs);
+
+    // Marca a própria resposta do professor e dúvidas dessa aula como lidas no painel Admin
+    const lessonUnreads = nextNotifs
+      .filter((n) => n.id === profNotif.id || n.lessonId === aula.id)
+      .map((n) => n.id);
+    const updatedRead = Array.from(new Set([...readAdminChatIds, ...lessonUnreads]));
+    setReadAdminChatIds(updatedRead);
+    saveReadChatNotifIds('admin-cleve', updatedRead);
+
+    setAdminReplyDrafts((prev) => ({ ...prev, [aula.id]: '' }));
+    setAdminReplyTargets((prev) => ({ ...prev, [aula.id]: null }));
+    showToast(`Resposta de ${profName} enviada — alunos notificados em Dúvidas & Chat ✓`);
+  };
 
   const handleAddLesson = (e) => {
     e.preventDefault();
@@ -993,11 +1099,25 @@ export default function AdminDashboard() {
     [approvedCertCount]
   );
 
+  const unreadStudentChats = useMemo(
+    () =>
+      chatNotifications.filter(
+        (n) => n.authorRole === 'aluno' && !readAdminChatIds.includes(n.id)
+      ),
+    [chatNotifications, readAdminChatIds]
+  );
+
   // 7 ABAS REAIS DA SIDEBAR
   const sidebarItems = [
     { id: 'inicio', label: 'Visão Geral', desc: 'Gráficos e resumo', icon: Home },
     { id: 'alunos', label: 'Alunos e Matrículas', desc: `${students.length} alunos • APH 200h`, icon: Users },
-    { id: 'conteudo', label: 'Aulas e PDFs (200h)', desc: '11 módulos oficiais', icon: BookOpen },
+    {
+      id: 'conteudo',
+      label: 'Aulas e PDFs (200h)',
+      desc: '11 módulos oficiais',
+      icon: BookOpen,
+      badge: unreadStudentChats.length,
+    },
     {
       id: 'presenca',
       label: 'Presença e Atestados',
@@ -1959,11 +2079,22 @@ export default function AdminDashboard() {
                               {m.titulo}
                             </strong>
                             <span
-                              className={`text-[11px] block mt-0.5 ${
+                              className={`text-[11px] flex items-center gap-1.5 mt-0.5 ${
                                 active ? 'text-white/85' : 'text-white/50'
                               }`}
                             >
-                              {m.cargaHoraria} • {m.aulas.length} aula(s) • {m.materiais.length} PDF(s)
+                              {m.liberadoProfessor ? (
+                                <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
+                                  <Unlock className="w-3 h-3" />
+                                  <span>Liberado</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-amber-300/90 font-semibold">
+                                  <Lock className="w-3 h-3" />
+                                  <span>Bloqueado</span>
+                                </span>
+                              )}
+                              <span>• {m.aulas.length} aula(s)</span>
                             </span>
                           </div>
                         </div>
@@ -1998,7 +2129,33 @@ export default function AdminDashboard() {
                         {activeMod.titulo}
                       </h2>
                     </div>
-                    <div className="flex items-center gap-3 text-center">
+                    <div className="flex flex-wrap items-center gap-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleModuleRelease(activeMod.modulo)}
+                        className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 border transition-all ${
+                          activeMod.liberadoProfessor
+                            ? 'bg-emerald-500/15 hover:bg-amber-500/20 border-emerald-500/55 hover:border-amber-400 text-emerald-300 hover:text-amber-200'
+                            : 'bg-[#ED101C] hover:bg-[#C80B15] border-[#FF6B74]/60 text-white shadow-red-glow-sm'
+                        }`}
+                        title={
+                          activeMod.liberadoProfessor
+                            ? 'Clique para bloquear este módulo aos alunos'
+                            : 'Clique para liberar este módulo para a turma'
+                        }
+                      >
+                        {activeMod.liberadoProfessor ? (
+                          <>
+                            <Unlock className="w-4 h-4 shrink-0" />
+                            <span>Liberado aos Alunos • Bloquear</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4 shrink-0" />
+                            <span>Liberar Módulo {activeMod.modulo} aos Alunos</span>
+                          </>
+                        )}
+                      </button>
                       <div className="px-3.5 py-2 rounded-2xl bg-black/35 border border-white/10">
                         <strong className="text-lg font-mono font-extrabold text-white block leading-none">
                           {activeMod.aulas.length}
@@ -2029,6 +2186,8 @@ export default function AdminDashboard() {
                       const badgeCls =
                         aula.tipo === 'PRATICA'
                           ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300'
+                          : aula.tipo === 'SLIDES' || aula.tipo === 'IMAGEM'
+                          ? 'bg-sky-500/15 border-sky-500/35 text-sky-300'
                           : aula.tipo === 'LEITURA'
                           ? 'bg-amber-500/15 border-amber-500/35 text-amber-300'
                           : 'bg-[#ED101C]/15 border-[#ED101C]/40 text-[#FF6B74]';
@@ -2118,6 +2277,8 @@ export default function AdminDashboard() {
                           className="w-full bg-[#141722] border border-white/15 focus:border-[#ED101C] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none"
                         >
                           <option value="VIDEO">Videoaula</option>
+                          <option value="SLIDES">Slides / Apresentação</option>
+                          <option value="IMAGEM">Imagem / Protocolo Visual</option>
                           <option value="PRATICA">Aula Prática</option>
                           <option value="LEITURA">Leitura / Protocolo</option>
                         </select>
@@ -2137,7 +2298,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="sm:col-span-12">
                         <label className="block text-[11px] font-bold text-white/75 mb-1.5">
-                          4. Link do Vídeo (YouTube / Vimeo / MP4 — opcional por enquanto)
+                          4. Link do Vídeo, Slide ou Imagem (YouTube / Vimeo / MP4 / URL da Imagem — opcional)
                         </label>
                         <input
                           type="url"
@@ -2271,6 +2432,211 @@ export default function AdminDashboard() {
                       + Salvar Link
                     </button>
                   </form>
+                </div>
+
+                {/* BLOCO 3: CHAT DE DÚVIDAS DOS ALUNOS NAS AULAS DESTE MÓDULO */}
+                <div className="admin-glass-card rounded-3xl p-5 sm:p-6 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-display font-extrabold text-base sm:text-lg text-white flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-[#ED101C]" />
+                      <span>Dúvidas &amp; Comentários dos Alunos (Módulo {activeMod.modulo})</span>
+                      {unreadStudentChats.some((n) => n.moduloNumero === activeMod.modulo) && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#ED101C] text-white text-[10px] font-extrabold animate-pulse">
+                          Nova dúvida
+                        </span>
+                      )}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {unreadStudentChats.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextIds = Array.from(
+                              new Set([
+                                ...readAdminChatIds,
+                                ...chatNotifications.map((n) => n.id),
+                              ])
+                            );
+                            setReadAdminChatIds(nextIds);
+                            saveReadChatNotifIds('admin-cleve', nextIds);
+                            showToast('Todas as dúvidas marcadas como lidas ✓');
+                          }}
+                          className="px-2.5 py-1 rounded-full bg-[#ED101C]/15 hover:bg-[#ED101C] border border-[#ED101C]/45 text-[#FF8C93] hover:text-white text-[11px] font-bold transition-colors"
+                        >
+                          Marcar como lidas ({unreadStudentChats.length})
+                        </button>
+                      )}
+                      <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-white/70">
+                        {activeMod.aulas.reduce(
+                          (acc, a) => acc + (lessonComments[a.id]?.length || 0),
+                          0
+                        )}{' '}
+                        mensagem(ns)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {activeMod.aulas.map((aula) => {
+                      const cmts = lessonComments[aula.id] || [];
+                      return (
+                        <div
+                          key={aula.id}
+                          className="p-4 rounded-2xl bg-[#11131B] border border-white/10 space-y-3"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <strong className="text-xs sm:text-sm text-white">
+                              Aula {aula.ordem} — {aula.titulo}
+                            </strong>
+                            <span className="text-[11px] font-mono text-white/55">
+                              {cmts.length} comentário(s)
+                            </span>
+                          </div>
+
+                          {cmts.length > 0 && (() => {
+                            const adminStudentColorMap = buildLessonStudentColorMap(cmts);
+                            return (
+                              <div className="space-y-2.5 h-60 overflow-y-auto p-3 rounded-xl bg-[#0A0B10] border border-white/[0.06]">
+                                {cmts.map((c) => {
+                                  const isProf = c.authorRole === 'professor';
+                                  const displayAuthor = isProf
+                                    ? c.authorName?.toLowerCase().includes('cleverson')
+                                      ? 'Cleverson Black'
+                                      : c.authorName || 'Cleverson Black'
+                                    : c.authorName;
+                                  const authorColor = getLessonParticipantColor(
+                                    adminStudentColorMap,
+                                    displayAuthor,
+                                    c.authorRole
+                                  );
+                                  const parentMsg = c.parentId && cmts.find((p) => p.id === c.parentId);
+                                  const quotedAuthor = c.replyToName || parentMsg?.authorName;
+                                  const quotedRole = c.replyToRole || parentMsg?.authorRole || 'aluno';
+                                  const quotedColor = getLessonParticipantColor(
+                                    adminStudentColorMap,
+                                    quotedAuthor,
+                                    quotedRole
+                                  );
+                                  const quotedSnippet = c.replyToSnippet || parentMsg?.text;
+
+                                return (
+                                  <div
+                                    key={c.id}
+                                    className={`flex ${isProf ? 'justify-end' : 'justify-start'}`}
+                                  >
+                                    <div
+                                      className={`w-fit max-w-[85%] rounded-2xl px-3 py-2 text-xs border ${
+                                        isProf
+                                          ? 'rounded-br-sm bg-gradient-to-br from-[#3A0B12] to-[#1D080D] border-[#ED101C]/60'
+                                          : 'rounded-bl-sm bg-[#161822] border-white/[0.08]'
+                                      }`}
+                                    >
+                                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                                        <strong
+                                          className="text-[11px] font-extrabold"
+                                          style={{ color: authorColor }}
+                                        >
+                                          {displayAuthor}
+                                        </strong>
+                                        {isProf && (
+                                          <span className="px-1.5 py-0.5 rounded-full bg-[#ED101C] text-white text-[9.5px] font-bold">
+                                            (Professor)
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] text-white/40 font-mono">
+                                          {c.createdAt}
+                                        </span>
+                                      </div>
+
+                                      {quotedSnippet && (
+                                        <div className="mb-1 px-2 py-1 rounded bg-black/35 border-l-2 border-[#ED101C] text-[10.5px] text-white/70">
+                                          <strong className="block text-white text-[10px]">
+                                            {c.replyToName || parentMsg?.authorName}
+                                          </strong>
+                                          <span className="block truncate max-w-[220px]">
+                                            {quotedSnippet}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      <p className="text-white/90 leading-relaxed">{c.text}</p>
+
+                                      {!isProf && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setAdminReplyTargets((prev) => ({
+                                              ...prev,
+                                              [aula.id]: {
+                                                parentId: c.id,
+                                                authorName: displayAuthor,
+                                                authorRole: c.authorRole,
+                                                snippet: c.text,
+                                              },
+                                            }))
+                                          }
+                                          className="mt-1 text-[10.5px] font-bold text-[#FF5A65] hover:underline"
+                                        >
+                                          Responder →
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            );
+                          })()}
+
+                          {adminReplyTargets[aula.id] && (
+                            <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-[#ED101C]/15 border border-[#ED101C]/40 text-[11px] text-white">
+                              <span>
+                                Respondendo para{' '}
+                                <strong>{adminReplyTargets[aula.id].authorName}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setAdminReplyTargets((prev) => ({ ...prev, [aula.id]: null }))
+                                }
+                                className="text-white/70 hover:text-white font-bold"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          )}
+
+                          <form
+                            onSubmit={(e) => handleProfessorReplyComment(aula, e)}
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              type="text"
+                              value={adminReplyDrafts[aula.id] || ''}
+                              onChange={(e) =>
+                                setAdminReplyDrafts((prev) => ({
+                                  ...prev,
+                                  [aula.id]: e.target.value,
+                                }))
+                              }
+                              placeholder={
+                                adminReplyTargets[aula.id]
+                                  ? `Responder para ${adminReplyTargets[aula.id].authorName}...`
+                                  : `Responder ou comentar como Cleverson Black (Professor)...`
+                              }
+                              className="flex-1 bg-[#090A0F] border border-white/15 focus:border-[#ED101C] rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/40 focus:outline-none"
+                            />
+                            <button
+                              type="submit"
+                              className="px-3.5 py-2 rounded-xl bg-[#ED101C] hover:bg-[#C80B15] text-white text-xs font-bold shrink-0"
+                            >
+                              Responder
+                            </button>
+                          </form>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

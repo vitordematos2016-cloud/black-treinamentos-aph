@@ -31,6 +31,12 @@ const STORAGE_KEYS = {
   EXPENSES_ADMIN: 'black_aph_admin_expenses_v1',
   ATTENDANCE_ADMIN: 'black_aph_admin_attendance_v1',
   ADMIN_PROFILE: 'black_aph_admin_profile_v1',
+  LOCK_MIGRATION: 'black_aph_module_lock_migration_v2',
+  LESSON_RATINGS: 'black_aph_lesson_ratings_v1',
+  LESSON_COMMENTS: 'black_aph_lesson_comments_v1',
+  CHAT_NOTIFICATIONS: 'black_aph_chat_notifications_v1',
+  READ_CHAT_NOTIFS: 'black_aph_read_chat_notifs_v1',
+  STUDENT_PASSWORDS: 'black_aph_student_passwords_v1',
 };
 
 function safeRead(key, fallback) {
@@ -56,13 +62,49 @@ export function isSupabaseConfigured() {
   );
 }
 
+function ensureModuleLockPolicyMigration() {
+  try {
+    if (localStorage.getItem(STORAGE_KEYS.LOCK_MIGRATION)) return;
+    localStorage.setItem(STORAGE_KEYS.LOCK_MIGRATION, '1');
+
+    // Inicializa / restaura com política segura: somente Módulo 01 liberado até o professor liberar os próximos
+    const existingMods = safeRead(STORAGE_KEYS.MODULES, null);
+    if (Array.isArray(existingMods) && existingMods.length > 0) {
+      const lockedMods = existingMods.map((m) => ({
+        ...m,
+        liberadoProfessor: m.modulo === '01',
+      }));
+      safeWrite(STORAGE_KEYS.MODULES, lockedMods);
+    }
+
+    // Zera conclusão simulada antiga para respeitar o fluxo real (Módulo 01 em diante)
+    const freshProgress = {
+      completedModuleIds: [],
+      completedLessonIds: [],
+      quizPassed: false,
+      quizBestPct: null,
+    };
+    safeWrite(STORAGE_KEYS.PROGRESS, freshProgress);
+
+    // Limpa eventuais solicitações de certificado criadas pela simulação antiga
+    localStorage.removeItem(STORAGE_KEYS.CERT_REQUESTS);
+  } catch {
+    // ignora erro de storage
+  }
+}
+
 /* ============================================================================
    1. CATÁLOGO & MÓDULOS DO CURSO APH 200H (EDITÁVEIS PELO ADMIN DO CLEVE!)
 ============================================================================ */
 export function loadCourseModules200h() {
+  ensureModuleLockPolicyMigration();
   const saved = safeRead(STORAGE_KEYS.MODULES, null);
-  if (Array.isArray(saved) && saved.length > 0) return saved;
-  return MODULOS_200H_ESTRUTURADOS;
+  const source = Array.isArray(saved) && saved.length > 0 ? saved : MODULOS_200H_ESTRUTURADOS;
+  return source.map((m) => ({
+    ...m,
+    liberadoProfessor:
+      typeof m.liberadoProfessor === 'boolean' ? m.liberadoProfessor : m.modulo === '01',
+  }));
 }
 
 export function saveCourseModules200h(modulesList) {
@@ -88,22 +130,43 @@ export function getCourseCatalog200h() {
    2. SESSÃO, PROGRESSO, ANOTAÇÕES E FOTO DO ALUNO
 ============================================================================ */
 export function loadStudentSession() {
+  try {
+    const tempRaw = sessionStorage.getItem(STORAGE_KEYS.SESSION);
+    if (tempRaw) return JSON.parse(tempRaw);
+  } catch {
+    // ignora erro de sessionStorage
+  }
   return safeRead(STORAGE_KEYS.SESSION, null);
 }
 
-export function saveStudentSession(session) {
+export function saveStudentSession(session, rememberMe) {
   try {
     if (!session) {
       localStorage.removeItem(STORAGE_KEYS.SESSION);
+      sessionStorage.removeItem(STORAGE_KEYS.SESSION);
+      return;
+    }
+    const shouldRemember =
+      typeof rememberMe === 'boolean'
+        ? rememberMe
+        : typeof session.rememberMe === 'boolean'
+          ? session.rememberMe
+          : true;
+    const payload = JSON.stringify({ ...session, rememberMe: shouldRemember });
+    if (shouldRemember) {
+      localStorage.setItem(STORAGE_KEYS.SESSION, payload);
+      sessionStorage.removeItem(STORAGE_KEYS.SESSION);
     } else {
-      localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
+      sessionStorage.setItem(STORAGE_KEYS.SESSION, payload);
+      localStorage.removeItem(STORAGE_KEYS.SESSION);
     }
   } catch {
-    // ignora
+    // ignora erro de storage
   }
 }
 
 export function loadStudentProgress() {
+  ensureModuleLockPolicyMigration();
   const parsed = safeRead(STORAGE_KEYS.PROGRESS, null);
   if (parsed) {
     const completedModuleIds = Array.isArray(parsed.completedModuleIds)
@@ -118,10 +181,9 @@ export function loadStudentProgress() {
       completedLessonIds,
     };
   }
-  const defaultCompletedModules = ['01', '02', '03', '04', '05', '06', '07'];
   return {
-    completedModuleIds: defaultCompletedModules,
-    completedLessonIds: getLessonIdsForModules(defaultCompletedModules),
+    completedModuleIds: [],
+    completedLessonIds: [],
     quizPassed: false,
     quizBestPct: null,
   };
@@ -137,6 +199,99 @@ export function loadModuleNotes() {
 
 export function saveModuleNotes(notesMap) {
   safeWrite(STORAGE_KEYS.NOTES, notesMap);
+}
+
+export function loadLessonRatings() {
+  const parsed = safeRead(STORAGE_KEYS.LESSON_RATINGS, {});
+  return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+export function saveLessonRatings(ratingsMap) {
+  safeWrite(STORAGE_KEYS.LESSON_RATINGS, ratingsMap);
+}
+
+export function loadLessonComments() {
+  const parsed = safeRead(STORAGE_KEYS.LESSON_COMMENTS, {});
+  return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+export function saveLessonComments(commentsMap) {
+  safeWrite(STORAGE_KEYS.LESSON_COMMENTS, commentsMap);
+}
+
+const DISTINCT_STUDENT_NAME_PALETTE = [
+  '#FFFFFF', // 1º aluno da conversa sempre em branco (iniciador / primeiro comentário)
+  '#38BDF8', // 2º aluno — Azul Sky
+  '#34D399', // 3º aluno — Esmeralda
+  '#F472B6', // 4º aluno — Rosa
+  '#A78BFA', // 5º aluno — Violeta
+  '#22D3EE', // 6º aluno — Ciano
+  '#FB923C', // 7º aluno — Laranja
+  '#A3E635', // 8º aluno — Lima
+  '#2DD4BF', // 9º aluno — Turquesa
+  '#818CF8', // 10º aluno — Índigo Claro
+];
+
+/**
+ * Mapeia deterministicamente a cor do nome de cada aluno em uma aula por ordem de chegada:
+ * - O 1º aluno distinto da conversa sempre fica em branco (#FFFFFF).
+ * - Do 2º em diante (2, 3, ..., 10+), cada novo aluno recebe uma cor distinta legível.
+ */
+export function buildLessonStudentColorMap(comments = []) {
+  const map = new Map();
+  let studentOrder = 0;
+
+  comments.forEach((c) => {
+    if (!c || c.authorRole === 'professor') return;
+    const key = String(c.authorName || 'aluno').trim().toLowerCase();
+    if (!map.has(key)) {
+      const color =
+        studentOrder < DISTINCT_STUDENT_NAME_PALETTE.length
+          ? DISTINCT_STUDENT_NAME_PALETTE[studentOrder]
+          : `hsl(${Math.round(((studentOrder - 9) * 137.508 + 25) % 360)}, 85%, 72%)`;
+      map.set(key, { color, orderIndex: studentOrder });
+      studentOrder += 1;
+    }
+  });
+
+  return map;
+}
+
+export function getLessonParticipantColor(colorMap, authorName, authorRole = 'aluno') {
+  if (authorRole === 'professor') return '#FFFFFF';
+  const key = String(authorName || 'aluno').trim().toLowerCase();
+  return colorMap.get(key)?.color || '#FFFFFF';
+}
+
+/* ============================================================================
+   2B. NOTIFICAÇÕES DE DÚVIDAS & CHAT DAS AULAS (SEPARADAS DOS COMUNICADOS!)
+============================================================================ */
+export function loadChatNotifications() {
+  const parsed = safeRead(STORAGE_KEYS.CHAT_NOTIFICATIONS, []);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+export function saveChatNotifications(list) {
+  safeWrite(STORAGE_KEYS.CHAT_NOTIFICATIONS, Array.isArray(list) ? list : []);
+}
+
+export function pushChatNotification(entry) {
+  const current = loadChatNotifications();
+  const next = [entry, ...current].slice(0, 80);
+  saveChatNotifications(next);
+  return next;
+}
+
+export function loadReadChatNotifIds(readerKey = 'default') {
+  const parsed = safeRead(`${STORAGE_KEYS.READ_CHAT_NOTIFS}_${readerKey}`, []);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+export function saveReadChatNotifIds(readerKey = 'default', ids = []) {
+  safeWrite(
+    `${STORAGE_KEYS.READ_CHAT_NOTIFS}_${readerKey}`,
+    Array.from(new Set(ids))
+  );
 }
 
 export function loadStudentAvatar(studentId = 'default') {
@@ -198,30 +353,56 @@ export function saveAbsenceJustifications(list) {
 ============================================================================ */
 export function loadStudentInstallments() {
   const OVERDUE_DEMO_FLAG = 'black_aph_overdue_slice_v2';
+  const PRICE_200_MIGRATION_FLAG = 'black_aph_installments_200_v1';
   const parsed = safeRead(STORAGE_KEYS.INSTALLMENTS, null);
   if (Array.isArray(parsed) && parsed.length > 0) {
-    // Migração única para exibir as 4 fatias (Pagas, Em Aberto, Em Atraso, A Vencer) mantendo todos os boletos anexados
+    let working = parsed;
+    let changed = false;
+
     try {
+      // Migração oficial de mensalidade para R$ 200,00 (10x = R$ 2.000,00 total)
+      if (!localStorage.getItem(PRICE_200_MIGRATION_FLAG)) {
+        localStorage.setItem(PRICE_200_MIGRATION_FLAG, '1');
+        working = working.map((p) =>
+          p.valor === 'R$ 180,00' || p.valorCentavos === 18000 || !p.valorCentavos
+            ? { ...p, valor: 'R$ 200,00', valorCentavos: 20000 }
+            : p
+        );
+        changed = true;
+      }
+
+      // Migração única para corrigir status irreais de parcelas futuras de 2027 (evitar "Em atraso" em datas que vencem no futuro)
       if (!localStorage.getItem(OVERDUE_DEMO_FLAG)) {
         localStorage.setItem(OVERDUE_DEMO_FLAG, '1');
-        const hasOverdue = parsed.some((p) => p.status === 'atrasada');
-        if (!hasOverdue) {
-          const migrated = parsed.map((p) =>
-            p.numero === 4 ? { ...p, status: 'atrasada' } : p
-          );
-          safeWrite(STORAGE_KEYS.INSTALLMENTS, migrated);
-          return migrated;
-        }
+      }
+      if (!localStorage.getItem('black_aph_fix_future_status_v1')) {
+        localStorage.setItem('black_aph_fix_future_status_v1', '1');
+        working = working.map((p) => {
+          if (p.status === 'atrasada' && typeof p.vencimento === 'string') {
+            const [d, m, y] = p.vencimento.split('/').map(Number);
+            const due = new Date(y, m - 1, d);
+            const today = new Date();
+            if (due > today) {
+              return { ...p, status: p.numero === 5 ? 'aberta' : p.numero < 5 ? 'paga' : 'futura' };
+            }
+          }
+          return p;
+        });
+        changed = true;
+      }
+
+      if (changed) {
+        safeWrite(STORAGE_KEYS.INSTALLMENTS, working);
       }
     } catch {
       // ignora
     }
-    return parsed;
+    return working;
   }
   const seeded = PARCELAS_FINANCEIRO_DEMO.map((p) => ({
     ...p,
-    status: p.numero === 4 ? 'atrasada' : p.status,
-    valorCentavos: 18000,
+    valor: 'R$ 200,00',
+    valorCentavos: 20000,
     boletoFileId: '',
     boletoNome: '',
     boletoTamanho: '',
@@ -230,6 +411,8 @@ export function loadStudentInstallments() {
   }));
   try {
     localStorage.setItem(OVERDUE_DEMO_FLAG, '1');
+    localStorage.setItem(PRICE_200_MIGRATION_FLAG, '1');
+    localStorage.setItem('black_aph_fix_future_status_v1', '1');
   } catch {
     // ignora
   }
@@ -376,6 +559,42 @@ export function saveAdminStudents(list) {
   safeWrite(STORAGE_KEYS.STUDENTS_ADMIN, list);
 }
 
+export function updateStudentProfileContact({
+  studentId = 'demo-student-001',
+  email,
+  telefone,
+  nome,
+}) {
+  const students = loadAdminStudents();
+  let changed = false;
+  const nextStudents = students.map((student) => {
+    if (student.id !== studentId) return student;
+    changed = true;
+    return {
+      ...student,
+      ...(typeof nome === 'string' && nome.trim() ? { nome: nome.trim().toUpperCase() } : {}),
+      ...(typeof email === 'string' && email.trim() ? { email: email.trim() } : {}),
+      ...(typeof telefone === 'string' && telefone.trim() ? { telefone: telefone.trim() } : {}),
+    };
+  });
+
+  if (changed) {
+    saveAdminStudents(nextStudents);
+  }
+
+  const currentSession = loadStudentSession();
+  if (currentSession && currentSession.id === studentId) {
+    saveStudentSession({
+      ...currentSession,
+      ...(typeof nome === 'string' && nome.trim() ? { nome: nome.trim().toUpperCase() } : {}),
+      ...(typeof email === 'string' && email.trim() ? { email: email.trim() } : {}),
+      ...(typeof telefone === 'string' && telefone.trim() ? { telefone: telefone.trim() } : {}),
+    });
+  }
+
+  return nextStudents;
+}
+
 const INITIAL_EXPENSES = [
   { id: 'exp-1', descricao: 'Aluguel Sala / Estrutura Unicesumar', categoria: 'Estrutura', valor: 1850, data: '05/06/2027' },
   { id: 'exp-2', descricao: 'Insumos de Prática (Gaze, Ataduras, Luvas, Torniquetes)', categoria: 'Materiais APH', valor: 1240, data: '08/06/2027' },
@@ -458,31 +677,121 @@ export function saveAdminProfile(profile) {
 /* ============================================================================
    8. AUTENTICAÇÃO DO ALUNO (PRONTA PARA PLUGAR NO SUPABASE AUTH)
 ============================================================================ */
-export async function authenticateStudent({ identifier, password }) {
+export function validateStrongPassword(password = '') {
+  const cleaned = String(password || '').trim();
+  const minLength = cleaned.length >= 6;
+  const hasUppercase = /[A-ZÀ-Ý]/.test(cleaned);
+  const hasSpecial = /[^A-Za-zÀ-ÿ0-9\s]/.test(cleaned);
+  const missing = [];
+  if (!minLength) missing.push('no mínimo 6 dígitos');
+  if (!hasUppercase) missing.push('1 letra maiúscula');
+  if (!hasSpecial) missing.push('1 caractere especial (ex: ! @ # $)');
+
+  return {
+    valid: minLength && hasUppercase && hasSpecial,
+    checks: { minLength, hasUppercase, hasSpecial },
+    error: missing.length > 0 ? `A senha deve conter ${missing.join(', ')}.` : '',
+  };
+}
+
+export function getCustomStudentPassword(studentId = 'demo-student-001') {
+  const map = safeRead(STORAGE_KEYS.STUDENT_PASSWORDS, {});
+  return typeof map?.[studentId] === 'string' ? map[studentId] : '';
+}
+
+export function hasCustomStudentPassword(studentId = 'demo-student-001') {
+  return getCustomStudentPassword(studentId).length >= 6;
+}
+
+export function saveCustomStudentPassword(studentId = 'demo-student-001', newPassword = '') {
+  const cleaned = String(newPassword || '').trim();
+  const check = validateStrongPassword(cleaned);
+  if (!check.valid) return false;
+  const map = safeRead(STORAGE_KEYS.STUDENT_PASSWORDS, {});
+  safeWrite(STORAGE_KEYS.STUDENT_PASSWORDS, {
+    ...(map && typeof map === 'object' ? map : {}),
+    [studentId]: cleaned,
+  });
+  return true;
+}
+
+export function changeStudentPassword({
+  studentId = 'demo-student-001',
+  currentPassword = '',
+  newPassword = '',
+}) {
+  const saved = getCustomStudentPassword(studentId);
+  const next = String(newPassword || '').trim();
+  const curr = String(currentPassword || '').trim();
+
+  if (saved) {
+    if (!curr) {
+      return { ok: false, error: 'Informe sua senha atual para confirmar a alteração.' };
+    }
+    if (curr !== saved) {
+      return { ok: false, error: 'A senha atual informada está incorreta.' };
+    }
+  }
+  const strength = validateStrongPassword(next);
+  if (!strength.valid) {
+    return { ok: false, error: strength.error };
+  }
+  if (saved && next === saved) {
+    return { ok: false, error: 'A nova senha precisa ser diferente da senha atual.' };
+  }
+
+  saveCustomStudentPassword(studentId, next);
+  return { ok: true };
+}
+
+export async function authenticateStudent({
+  identifier,
+  password,
+  skipPasswordCheck = false,
+  rememberMe = true,
+}) {
   const cleaned = (identifier || '').trim();
-  if (!cleaned || !(password || '').trim()) {
+  const cleanedPassword = (password || '').trim();
+  if (!cleaned || !cleanedPassword) {
     return {
       ok: false,
       error: 'Informe seu CPF ou e-mail e sua senha de acesso.',
+    };
+  }
+  const strength = validateStrongPassword(cleanedPassword);
+  if (!strength.valid) {
+    return {
+      ok: false,
+      error: strength.error,
     };
   }
 
   const isCpf = /\d{3}/.test(cleaned) && !cleaned.includes('@');
   const students = loadAdminStudents();
   const demoStudent = students.find((s) => s.id === 'demo-student-001');
+  const studentId = 'demo-student-001';
+
+  const savedPassword = getCustomStudentPassword(studentId);
+  if (!skipPasswordCheck && savedPassword && cleanedPassword !== savedPassword) {
+    return {
+      ok: false,
+      error: 'Senha incorreta. Tente novamente ou clique em "Esqueci minha senha".',
+    };
+  }
 
   const session = {
-    id: 'demo-student-001',
+    id: studentId,
     nome: demoStudent?.nome || 'VITOR MATOS',
     cpf: isCpf ? cleaned : demoStudent?.cpf || '108.492.739-00',
-    email: cleaned.includes('@') ? cleaned : demoStudent?.email || 'vitor.matos@aluno.blackaph.com.br',
+    email: demoStudent?.email || (cleaned.includes('@') ? cleaned : 'vitor.matos@aluno.blackaph.com.br'),
     telefone: demoStudent?.telefone || '(45) 99837-8795',
     turma: CURSO_OFICIAL_200H.turma,
     provider: isSupabaseConfigured() ? 'supabase' : 'demo',
+    rememberMe: Boolean(rememberMe),
     loggedAt: new Date().toISOString(),
   };
 
-  saveStudentSession(session);
+  saveStudentSession(session, rememberMe);
   return { ok: true, session };
 }
 

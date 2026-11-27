@@ -407,97 +407,205 @@
   box-shadow: 0 0 10px rgba(237, 16, 28, 0.55);
 }
 
-/* Cada card interno (Calendário, Próximas Aulas, Legenda): interior escuro 100% limpo + brilho só na borda */
+/* Cada card interno (Calendário, Próximas Aulas, Legenda): brilho refinado + profundidade 3D */
 .glass-cal-panel {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(20, 22, 30, 0.92) 0%, rgba(12, 13, 18, 0.96) 100%);
-  border: 1px solid rgba(255, 92, 102, 0.42);
+  background: linear-gradient(165deg, rgba(24, 27, 38, 0.96) 0%, rgba(12, 13, 19, 0.99) 100%);
+  border: 1px solid rgba(255, 105, 114, 0.42);
   box-shadow:
-    0 0 18px rgba(237, 16, 28, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 14px 32px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(237, 16, 28, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .glass-cal-panel-neutral {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(20, 22, 30, 0.92) 0%, rgba(12, 13, 18, 0.96) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(165deg, rgba(22, 24, 34, 0.96) 0%, rgba(12, 13, 19, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    0 14px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================================
+   CALENDÁRIO 3D BLACK TREINAMENTOS — RÉPLICA DARK NEON COM ARGOLAS METÁLICAS
+============================================================================ */
+.cal3d-card {
+  position: relative;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #16070A 0%, #0D0D13 38%, #07080B 100%);
+  border: 2px solid rgba(237, 16, 28, 0.85);
+  box-shadow:
+    0 0 28px rgba(237, 16, 28, 0.28),
+    0 24px 48px rgba(0, 0, 0, 0.82),
+    inset 0 1px 0 rgba(255, 160, 165, 0.35);
+}
+
+.cal3d-top-art {
+  position: relative;
+  overflow: hidden;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  background:
+    radial-gradient(circle at 18% 60%, rgba(237, 16, 28, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 86% 55%, rgba(237, 16, 28, 0.24) 0%, transparent 48%),
+    linear-gradient(180deg, #18080C 0%, #0C0C12 100%);
+}
+
+.cal3d-month-band {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #520409 0%,
+    #C90D18 22%,
+    #F21927 50%,
+    #C90D18 78%,
+    #520409 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 195, 200, 0.52),
+    inset 0 -1px 0 rgba(70, 0, 5, 0.7),
+    0 6px 20px rgba(237, 16, 28, 0.32);
+}
+
+.cal3d-sun-pill {
+  background: linear-gradient(180deg, #FF2C39 0%, #B30812 100%);
+  box-shadow:
+    0 0 12px rgba(237, 16, 28, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.cal3d-eyelet {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 55%,
+    #060709 40%,
+    #9FA7B8 53%,
+    #F2F5FA 66%,
+    #454B59 82%,
+    #D61A26 95%
+  );
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.75),
+    0 0 8px rgba(237, 16, 28, 0.45),
+    inset 0 2px 3px rgba(0, 0, 0, 0.9);
+}
+
+.cal3d-ring {
+  width: 11px;
+  height: 28px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    #20232B 0%,
+    #9BA3B4 25%,
+    #FFFFFF 48%,
+    #7B8394 74%,
+    #14161C 100%
+  );
+  box-shadow:
+    0 6px 10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 1px rgba(255, 255, 255, 0.94),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.55);
+}
+
+.cal3d-day-normal {
+  color: #FFFFFF;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.cal3d-day-normal:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.cal3d-day-disabled {
+  color: rgba(255, 255, 255, 0.2);
+  background: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .glass-cal-day {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.025) 100%
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .glass-cal-day:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.34);
   transform: translateY(-1px);
 }
 
 .glass-cal-day-red {
-  background: linear-gradient(180deg, #ff3440 0%, #db0c18 55%, #9f0710 100%);
-  border: 1px solid rgba(255, 165, 170, 0.72);
+  background: linear-gradient(180deg, #FF3340 0%, #D90C18 60%, #A30710 100%);
+  border: 1px solid rgba(255, 175, 180, 0.78);
   box-shadow:
-    0 0 16px rgba(237, 16, 28, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+    0 3px 0 #74040B,
+    0 6px 14px rgba(237, 16, 28, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .glass-cal-day-green {
-  background: linear-gradient(180deg, #27c85d 0%, #158d3e 55%, #0c5725 100%);
-  border: 1px solid rgba(134, 239, 172, 0.68);
+  background: linear-gradient(180deg, #25D366 0%, #169B46 60%, #0E6A2E 100%);
+  border: 1px solid rgba(134, 239, 172, 0.72);
   box-shadow:
-    0 0 15px rgba(34, 197, 94, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    0 3px 0 #094D21,
+    0 6px 14px rgba(34, 197, 94, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
 .glass-cal-day-amber {
-  background: linear-gradient(180deg, #f5b922 0%, #d97706 55%, #92400e 100%);
-  border: 1px solid rgba(253, 224, 71, 0.68);
+  background: linear-gradient(180deg, #FFBE2E 0%, #DC7F09 60%, #9E5404 100%);
+  border: 1px solid rgba(253, 224, 71, 0.72);
   box-shadow:
-    0 0 14px rgba(245, 158, 11, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    0 3px 0 #713B02,
+    0 6px 14px rgba(245, 158, 11, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
 .glass-cal-event-active-red {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 76, 86, 0.85);
+  background: linear-gradient(90deg, rgba(237, 16, 28, 0.18) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 86, 96, 0.9);
   box-shadow:
-    0 0 16px rgba(237, 16, 28, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 6px 18px rgba(237, 16, 28, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .glass-cal-event-active-green {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(74, 222, 128, 0.85);
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(74, 222, 128, 0.88);
   box-shadow:
-    0 0 16px rgba(34, 197, 94, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 6px 18px rgba(34, 197, 94, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .glass-cal-event-active-amber {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(251, 191, 36, 0.85);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.88);
   box-shadow:
-    0 0 16px rgba(245, 158, 11, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 6px 18px rgba(245, 158, 11, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .glass-cal-bottom-bar {
-  background: linear-gradient(180deg, rgba(20, 22, 30, 0.94) 0%, rgba(12, 13, 18, 0.98) 100%);
-  border: 1px solid rgba(255, 92, 102, 0.48);
+  background: linear-gradient(165deg, rgba(24, 27, 38, 0.96) 0%, rgba(12, 13, 19, 0.98) 100%);
+  border: 1px solid rgba(255, 92, 102, 0.52);
   box-shadow:
-    0 0 18px rgba(237, 16, 28, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 10px 26px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(237, 16, 28, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* ============================================================================
@@ -727,4 +835,70 @@
 
 .desk-cal-under-reveal {
   animation: deskCalendarUnderReveal 0.42s ease-out forwards;
+}
+
+/* ============================================================================
+   PULSO ECG BLACK — TRAÇO LUMINOSO CORRENDO EXATAMENTE NAS DOBRAS DO ECG
+   ============================================================================ */
+@keyframes blackEcgCorePulse {
+  0%, 100% {
+    opacity: 0.22;
+    transform: translate(-50%, -50%) scale(0.84);
+  }
+  48% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+  65% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+.black-ecg-core-aura {
+  animation: blackEcgCorePulse 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes blackEcgTraceTail {
+  0% {
+    stroke-dashoffset: 22;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -102;
+    opacity: 0;
+  }
+}
+
+@keyframes blackEcgTraceSpark {
+  0% {
+    stroke-dashoffset: 4.5;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -102;
+    opacity: 0;
+  }
+}
+
+.black-ecg-trace-tail {
+  stroke-dasharray: 20 110;
+  animation: blackEcgTraceTail 2.8s linear infinite;
+}
+
+.black-ecg-trace-spark {
+  stroke-dasharray: 4 126;
+  animation: blackEcgTraceSpark 2.8s linear infinite;
 }

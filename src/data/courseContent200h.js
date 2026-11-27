@@ -26,7 +26,7 @@ export const CURSO_OFICIAL_200H = {
   cargaHorariaTotal: 200,
   frequenciaMinimaPct: 75,
   notaMinimaAprovacaoPct: 70,
-  thumb: '/assets/lms-curso-1-aph.jpg',
+  thumb: '/assets/curso-aph-rcp.jpg',
   instrutorPrincipal: 'Cleverson da Cruz & Equipe de 5 Instrutores',
 };
 
@@ -587,16 +587,16 @@ export const FREQUENCIA_PRESENCIAL_DEMO = {
 };
 
 export const PARCELAS_FINANCEIRO_DEMO = [
-  { numero: 1, vencimento: '10/02/2027', valor: 'R$ 180,00', status: 'paga', metodo: 'PIX' },
-  { numero: 2, vencimento: '10/03/2027', valor: 'R$ 180,00', status: 'paga', metodo: 'PIX' },
-  { numero: 3, vencimento: '10/04/2027', valor: 'R$ 180,00', status: 'paga', metodo: 'Cartão' },
-  { numero: 4, vencimento: '10/05/2027', valor: 'R$ 180,00', status: 'paga', metodo: 'PIX' },
-  { numero: 5, vencimento: '10/06/2027', valor: 'R$ 180,00', status: 'aberta', metodo: 'Boleto / PIX' },
-  { numero: 6, vencimento: '10/07/2027', valor: 'R$ 180,00', status: 'futura', metodo: 'Boleto / PIX' },
-  { numero: 7, vencimento: '10/08/2027', valor: 'R$ 180,00', status: 'futura', metodo: 'Boleto / PIX' },
-  { numero: 8, vencimento: '10/09/2027', valor: 'R$ 180,00', status: 'futura', metodo: 'Boleto / PIX' },
-  { numero: 9, vencimento: '10/10/2027', valor: 'R$ 180,00', status: 'futura', metodo: 'Boleto / PIX' },
-  { numero: 10, vencimento: '10/11/2027', valor: 'R$ 180,00', status: 'futura', metodo: 'Boleto / PIX' },
+  { numero: 1, vencimento: '10/02/2027', valor: 'R$ 200,00', status: 'paga', metodo: 'PIX' },
+  { numero: 2, vencimento: '10/03/2027', valor: 'R$ 200,00', status: 'paga', metodo: 'PIX' },
+  { numero: 3, vencimento: '10/04/2027', valor: 'R$ 200,00', status: 'paga', metodo: 'Cartão' },
+  { numero: 4, vencimento: '10/05/2027', valor: 'R$ 200,00', status: 'paga', metodo: 'PIX' },
+  { numero: 5, vencimento: '10/06/2027', valor: 'R$ 200,00', status: 'aberta', metodo: 'Boleto / PIX' },
+  { numero: 6, vencimento: '10/07/2027', valor: 'R$ 200,00', status: 'futura', metodo: 'Boleto / PIX' },
+  { numero: 7, vencimento: '10/08/2027', valor: 'R$ 200,00', status: 'futura', metodo: 'Boleto / PIX' },
+  { numero: 8, vencimento: '10/09/2027', valor: 'R$ 200,00', status: 'futura', metodo: 'Boleto / PIX' },
+  { numero: 9, vencimento: '10/10/2027', valor: 'R$ 200,00', status: 'futura', metodo: 'Boleto / PIX' },
+  { numero: 10, vencimento: '10/11/2027', valor: 'R$ 200,00', status: 'futura', metodo: 'Boleto / PIX' },
 ];
 
 export const COMUNICADOS_OFICIAIS_200H = [
